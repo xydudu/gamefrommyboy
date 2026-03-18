@@ -1,0 +1,27 @@
+# Dependencies
+venv/
+node_modules/
+__pycache__/
+*.pyc
+
+# OpenClaw internal
+.openclaw/
+.clawhub/
+.learnings/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Build outputs
+dist/
+build/

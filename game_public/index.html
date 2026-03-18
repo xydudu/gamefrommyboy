@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大国征战</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'PingFang SC', sans-serif; background: #1a1a2e; min-height: 100vh; color: #fff; }
+        
+        /* 顶部 */
+        .header { background: linear-gradient(90deg, #2d1b4e, #1a1a2e); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e94560; }
+        .country-name { font-size: 18px; font-weight: bold; color: #e94560; }
+        .stats { display: flex; gap: 10px; }
+        .stat-item { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 15px; font-size: 14px; }
+        .stat-value { font-weight: bold; color: #ffd700; }
+        
+        /* 页面切换 */
+        .page { display: none; height: calc(100vh - 60px); }
+        .page.active { display: block; }
+        
+        /* 地图页面 */
+        .map-page { position: relative; }
+        .map-svg { width: 100%; height: 100%; }
+        .territory-path { cursor: pointer; stroke: rgba(0,0,0,0.5); stroke-width: 1; }
+        .territory-path:hover { filter: brightness(1.2); stroke: #fff; stroke-width: 2; }
+        .territory-text { pointer-events: none; font-size: 11px; fill: #fff; text-anchor: middle; font-weight: bold; }
+        
+        /* 战斗准备页面 */
+        .prep-page { display: flex; flex-direction: column; padding: 15px; }
+        
+        /* 敌方兵力显示 */
+        .enemy-section { background: rgba(244,67,54,0.2); border: 2px solid #f44336; border-radius: 15px; padding: 20px; margin-bottom: 15px; text-align: center; }
+        .enemy-title { font-size: 20px; color: #ff6b6b; margin-bottom: 15px; }
+        .enemy-name { font-size: 24px; font-weight: bold; margin-bottom: 15px; }
+        .enemy-forces { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .enemy-card { background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; min-width: 100px; }
+        .enemy-card-icon { font-size: 40px; margin-bottom: 5px; }
+        .enemy-card-name { font-size: 16px; font-weight: bold; }
+        .enemy-card-lv { font-size: 14px; color: #ffd700; }
+        
+        /* 购买区域 */
+        .buy-section { flex: 1; background: rgba(255,255,255,0.05); border-radius: 15px; padding: 15px; overflow-y: auto; }
+        .buy-title { font-size: 18px; color: #4CAF50; margin-bottom: 15px; text-align: center; }
+        .buy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .buy-btn { padding: 15px; border: 2px solid #e94560; border-radius: 10px; background: rgba(233,69,96,0.2); color: white; cursor: pointer; text-align: center; }
+        .buy-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+        .buy-btn-icon { font-size: 28px; margin-bottom: 5px; }
+        .buy-btn-name { font-size: 14px; font-weight: bold; }
+        .buy-btn-price { font-size: 12px; color: #ffd700; }
+        
+        /* 我的兵力 */
+        .my-forces { background: rgba(76,175,80,0.1); border-radius: 10px; padding: 10px; margin-bottom: 15px; }
+        .my-forces-title { font-size: 14px; color: #4CAF50; margin-bottom: 10px; }
+        .my-forces-list { display: flex; flex-wrap: wrap; gap: 5px; }
+        .my-force-item { background: rgba(76,175,80,0.3); padding: 5px 10px; border-radius: 5px; font-size: 12px; }
+        
+        /* 底部按钮 */
+        .bottom-btns { display: flex; gap: 10px; margin-top: 10px; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-back { background: #666; color: white; }
+        .btn-attack { background: linear-gradient(135deg, #e94560, #ff6b6b); color: white; }
+        .btn-attack:disabled { background: #444; }
+        
+        /* 战斗页面 */
+        .battle-page { display: flex; flex-direction: column; padding: 15px; min-height: 600px; }
+        .battle-title { text-align: center; font-size: 20px; color: #e94560; margin-bottom: 15px; }
+        #battleCanvas { max-width: 100%; height: auto; }
+        .battlefield { display: flex; gap: 10px; flex: 1; }
+        .side { flex: 1; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; }
+        .side-title { text-align: center; font-size: 14px; margin-bottom: 10px; }
+        .battle-log { background: rgba(0,0,0,0.5); border-radius: 8px; padding: 10px; max-height: 150px; overflow-y: auto; font-size: 11px; margin-top: 10px; }
+        
+        .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); color: white; padding: 10px 20px; border-radius: 20px; z-index: 3000; opacity: 0; transition: opacity 0.3s; }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+    <!-- 顶部 -->
+    <div class="header">
+        <div class="country-name">🏛️ 大秦帝国</div>
+        <div class="stats">
+            <div class="stat-item">💰 <span class="stat-value" id="money">1000</span></div>
+            <div class="stat-item">👥 <span class="stat-value"><span id="pop">0</span>/<span id="popLimit">5</span></span></div>
+            <div class="stat-item">🏰 <span class="stat-value" id="terr">1</span></div>
+        </div>
+    </div>
+
+    <!-- 地图页面 -->
+    <div class="page map-page active" id="mapPage">
+        <svg class="map-svg" id="mapSvg" viewBox="0 0 600 450"></svg>
+    </div>
+
+    <!-- 战斗准备页面 -->
+    <div class="page prep-page" id="prepPage">
+        <!-- 敌方兵力 -->
+        <div class="enemy-section">
+            <div class="enemy-title">⚔️ 进攻目标</div>
+            <div class="enemy-name" id="targetName"></div>
+            <div class="enemy-forces" id="enemyForces"></div>
+        </div>
+
+        <!-- 购买兵力 -->
+        <div class="buy-section">
+            <div class="buy-title">🏰 招募士兵</div>
+            
+            <div class="buy-grid">
+                <div class="buy-btn" onclick="buy('infantry')">
+                    <div class="buy-btn-icon">⚔️</div>
+                    <div class="buy-btn-name">步兵</div>
+                    <div class="buy-btn-price">💰50</div>
+                </div>
+                <div class="buy-btn" onclick="buy('archer')">
+                    <div class="buy-btn-icon">🏹</div>
+                    <div class="buy-btn-name">弓兵</div>
+                    <div class="buy-btn-price">💰100</div>
+                </div>
+                <div class="buy-btn" onclick="buy('shield')">
+                    <div class="buy-btn-icon">🛡️</div>
+                    <div class="buy-btn-name">盾兵</div>
+                    <div class="buy-btn-price">💰150</div>
+                </div>
+                <div class="buy-btn" onclick="buy('gunner')">
+                    <div class="buy-btn-icon">🔫</div>
+                    <div class="buy-btn-name">枪兵</div>
+                    <div class="buy-btn-price">💰200</div>
+                </div>
+                <div class="buy-btn" onclick="buy('spear')">
+                    <div class="buy-btn-icon">🔱</div>
+                    <div class="buy-btn-name">矛兵</div>
+                    <div class="buy-btn-price">💰180</div>
+                </div>
+                <div class="buy-btn" onclick="buy('tank')">
+                    <div class="buy-btn-icon">🚗</div>
+                    <div class="buy-btn-name">坦克</div>
+                    <div class="buy-btn-price">💰500 人口2</div>
+                </div>
+            </div>
+
+            <!-- 我的兵力 -->
+            <div class="my-forces">
+                <div class="my-forces-title">⚔️ 我的军队</div>
+                <div class="my-forces-list" id="myForcesList"><div style="color:#888;">暂无士兵</div></div>
+            </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="bottom-btns">
+            <button class="btn btn-back" onclick="backToMap()">返回地图</button>
+            <button class="btn btn-attack" id="attackBtn" onclick="startBattle()">进攻!</button>
+        </div>
+    </div>
+
+    <!-- 战斗画布（一直存在，但默认隐藏） -->
+    <canvas id="battleCanvas" width="800" height="400" style="background: linear-gradient(180deg, #87CEEB 0%, #87CEEB 70%, #228B22 70%, #228B22 100%); border-radius: 10px; margin: 0 auto; display: none; min-height: 400px;"></canvas>
+
+    <!-- 战斗页面 -->
+    <div class="page battle-page" id="battlePage">
+        <div class="battle-title">⚔️ 战斗进行中</div>
+        <div class="battlefield" style="display: none;">
+            <div class="side"><div class="side-title" style="color:#4CAF50;">🟢 我方</div><div id="myUnits"></div></div>
+            <div class="side"><div class="side-title" style="color:#ff6b6b;">🔴 敌方</div><div id="enemyUnits"></div></div>
+        </div>
+        <div class="battle-log" id="battleLog"></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const game = { money: 1000, popLimit: 5, pop: 0, units: [], lv: {}, terr: [], target: null, enemy: [] };
+        
+        const cfg = {
+            infantry: {name:'步兵',icon:'⚔️',pop:1,lv:[{hp:45,atk:20,price:50},{hp:140,atk:30,up:500},{hp:200,atk:50,up:750}]},
+            archer: {name:'弓兵',icon:'🏹',pop:1,lv:[{hp:40,atk:20,range:2,price:100},{hp:70,atk:30,range:2,up:500},{hp:100,atk:60,range:3,up:750}]},
+            shield: {name:'盾兵',icon:'🛡️',pop:1,lv:[{hp:90,atk:10,price:150},{hp:160,atk:20,up:750},{hp:200,atk:30,up:1000}]},
+            gunner: {name:'枪兵',icon:'🔫',pop:1,lv:[{hp:60,atk:90,range:3,price:200},{hp:100,atk:120,range:3,up:1000},{hp:150,atk:150,range:4,up:1250}]},
+            spear: {name:'矛兵',icon:'🔱',pop:1,lv:[{hp:60,atk:100,price:180},{hp:150,atk:150,up:800},{hp:200,atk:200,up:1500}]},
+            tank: {name:'坦克',icon:'🚗',pop:2,lv:[{hp:100,atk:100,range:4,price:500},{hp:150,atk:125,range:4,up:1500},{hp:200,atk:150,range:4,up:2000}]}
+        };
+        
+        Object.keys(cfg).forEach(k=>game.lv[k]=1);
+
+        // 生成30个领地
+        function initTerr() {
+            const names = ['长安','洛阳','成都','荆州','扬州','徐州','冀州','幽州','并州','凉州','关中','汉中','南阳','江淮','辽东','西域','南蛮','东吴','巴蜀','中原','江南','塞北','胶东','湖广','云贵','闽越','河套','漠北','吐蕃','琉球'];
+            game.terr = names.map((n,i)=>({
+                id:i, name:n, owner:i===0?'player':'enemy',
+                x: 50 + (i%6)*95 + Math.random()*30,
+                y: 40 + Math.floor(i/6)*65 + Math.random()*20
+            }));
+            renderMap();
+        }
+
+        // 渲染地图
+        function renderMap() {
+            const svg = document.getElementById('mapSvg');
+            const myCount = game.terr.filter(t=>t.owner==='player').length;
+            document.getElementById('terr').textContent = myCount;
+            
+            let html = '';
+            game.terr.forEach(t=>{
+                const color = t.owner==='player'?'#4CAF50':'#f44336';
+                const r = 35;
+                let d = '';
+                for(let i=0; i<=8; i++) {
+                    const angle = (i/8)*Math.PI*2;
+                    const radius = r + Math.sin(t.id*3+i)*8;
+                    d += (i===0?'M':'L') + (t.x+Math.cos(angle)*radius) + ' ' + (t.y+Math.sin(angle)*radius);
+                }
+                d += 'Z';
+                html += `<path class="territory-path" d="${d}" fill="${color}" onclick="enterPrep(${t.id})"/>
+                <text class="territory-text" x="${t.x}" y="${t.y+4}">${t.name}</text>`;
+            });
+            svg.innerHTML = html;
+        }
+
+        // 进入战斗准备页面
+        function enterPrep(id) {
+            const t = game.terr[id];
+            if(t.owner==='player') return toast('这是你的领地！');
+            
+            game.target = t;
+            
+            // 生成敌方兵力（随机1-3个）
+            const types = Object.keys(cfg);
+            const count = Math.floor(Math.random()*3)+1; // 1-3个
+            game.enemy = [];
+            for(let i=0; i<count; i++) {
+                const type = types[Math.floor(Math.random()*types.length)];
+                const lv = Math.floor(Math.random()*2)+1; // 1-2级
+                const l = cfg[type].lv[lv-1];
+                game.enemy.push({type, lv, hp:l.hp, maxHp:l.hp, atk:l.atk, range:l.range||1});
+            }
+            
+            // 显示敌方兵力
+            document.getElementById('targetName').textContent = t.name;
+            let forcesHtml = '';
+            game.enemy.forEach(e=>{
+                const c = cfg[e.type];
+                forcesHtml += `<div class="enemy-card">
+                    <div class="enemy-card-icon">${c.icon}</div>
+                    <div class="enemy-card-name">${c.name}</div>
+                    <div class="enemy-card-lv">Lv.${e.lv} ❤️${e.hp} ⚔️${e.atk}</div>
+                </div>`;
+            });
+            document.getElementById('enemyForces').innerHTML = forcesHtml;
+            
+            // 切换页面
+            document.getElementById('mapPage').classList.remove('active');
+            document.getElementById('prepPage').classList.add('active');
+            
+            updatePrepUI();
+        }
+
+        // 返回地图
+        function backToMap() {
+            document.getElementById('prepPage').classList.remove('active');
+            document.getElementById('mapPage').classList.add('active');
+            game.target = null;
+            game.enemy = [];
+        }
+
+        // 购买
+        function buy(type) {
+            const c = cfg[type], price = c.lv[0].price, pop = c.pop;
+            if(game.money<price) return toast('金钱不足！');
+            if(game.pop+pop>game.popLimit) return toast('人口不足！');
+            
+            const lv = game.lv[type], d = c.lv[lv-1];
+            game.money -= price;
+            game.pop += pop;
+            game.units.push({type, lv, hp:d.hp, maxHp:d.hp, atk:d.atk, range:d.range||1});
+            
+            updateUI();
+            updatePrepUI();
+            toast(`招募 ${c.name} 成功！`, 'success');
+        }
+
+        // 更新准备页面
+        function updatePrepUI() {
+            // 更新我的兵力显示
+            const list = document.getElementById('myForcesList');
+            if(game.units.length===0) {
+                list.innerHTML = '<div style="color:#888;">暂无士兵，请招募！</div>';
+            } else {
+                list.innerHTML = game.units.map(u=>{
+                    const c = cfg[u.type];
+                    return `<div class="my-force-item">${c.icon} ${c.name} Lv.${u.lv}</div>`;
+                }).join('');
+            }
+            
+            // 更新购买按钮
+            document.querySelectorAll('.buy-btn').forEach(btn=>{
+                const type = btn.getAttribute('onclick').match(/'(.+)'/)[1];
+                const c = cfg[type];
+                const canBuy = game.money>=c.lv[0].price && game.pop+c.pop<=game.popLimit;
+                btn.classList.toggle('disabled', !canBuy);
+            });
+            
+            // 更新进攻按钮
+            document.getElementById('attackBtn').disabled = game.units.length===0;
+        }
+
+        // 开始战斗
+        async function startBattle() {
+            if(game.units.length===0) return;
+            
+            const my = game.units.map(u=>({...u, isEnemy:false}));
+            const enemy = game.enemy.map(e=>({...e, isEnemy:true}));
+            
+            document.getElementById('prepPage').classList.remove('active');
+            document.getElementById('battlePage').classList.add('active');
+            
+            // 显示画布
+            document.getElementById('battleCanvas').style.display = 'block';
+            
+            // 初始化火柴人战斗场景
+            initCanvas();
+            initBattleScene(my, enemy);
+            startBattleAnimation();
+            
+            const log = document.getElementById('battleLog');
+            log.innerHTML = `<div>⚔️ 战斗开始！我方${my.length}人 vs 敌方${enemy.length}人</div>`;
+            
+            // 战斗循环
+            for(let round=1; round<=100; round++) {
+                const aliveMy = battleUnits.filter(u => u.team === 'player' && u.alive);
+                const aliveEn = battleUnits.filter(u => u.team === 'enemy' && u.alive);
+                
+                if(aliveMy.length===0 || aliveEn.length===0) break;
+                
+                if (round % 10 === 1) {
+                    log.innerHTML += `<div style="color:#ffd700;">--- 第${Math.ceil(round/10)}回合 ---</div>`;
+                }
+                
+                // 记录战斗日志
+                for (const unit of battleUnits) {
+                    if (unit.effects.some(e => e.type === 'damage' && e.frame === 1)) {
+                        const dmgEffect = unit.effects.find(e => e.type === 'damage' && e.frame === 1);
+                        const attacker = unit.team === 'player' ? '敌方' : '我方';
+                        const target = unit.team === 'player' ? '我方' : '敌方';
+                        log.innerHTML += `<div style="color:#ff6b6b;">${attacker}${unitTypes[unit.type].name} 受到 ${dmgEffect.value} 伤害！</div>`;
+                    }
+                }
+                
+                log.scrollTop = log.scrollHeight;
+                await sleep(100);
+            }
+            
+            // 结算
+            await sleep(1000);
+            stopBattleAnimation();
+            
+            const myAlive = battleUnits.filter(u => u.team === 'player' && u.alive);
+            const win = myAlive.length > 0;
+            const tax = myAlive.length * 10;
+            const bonus = win ? 1000 : 0;
+            game.money += tax + bonus;
+            
+            if(win) {
+                game.target.owner = 'player';
+                game.target = null;
+            }
+            
+            log.innerHTML += `<div style="color:#4CAF50;font-weight:bold;margin-top:10px;">${win?'🎉 胜利！':'💀 失败！'} 获得 ${tax+bonus} 元</div>`;
+            log.innerHTML += `<div style="margin-top:10px;"><button onclick="endBattle()" style="padding:10px 30px;border:none;border-radius:20px;background:#e94560;color:white;">返回</button></div>`;
+            
+            game.units = [];
+            game.pop = 0;
+            updateUI();
+        }
+
+        function renderBattle(my, enemy) {
+            const render = u=>`<div style="background:rgba(255,255,255,0.1);border-radius:4px;padding:5px;margin-bottom:3px;font-size:11px;${u.hp<=0?'opacity:0.3;text-decoration:line-through;':''}">
+                <div>${cfg[u.type].icon} Lv.${u.lv}</div>
+                <div style="height:4px;background:rgba(255,255,255,0.2);border-radius:2px;"><div style="height:100%;width:${Math.max(0,u.hp/u.maxHp*100)}%;background:${u.hp/u.maxHp<0.3?'#f44336':'#4CAF50'};"></div></div>
+            </div>`;
+            document.getElementById('myUnits').innerHTML = my.map(render).join('');
+            document.getElementById('enemyUnits').innerHTML = enemy.map(render).join('');
+        }
+
+        function endBattle() {
+            stopBattleAnimation();
+            document.getElementById('battleCanvas').style.display = 'none';
+            document.getElementById('battlePage').classList.remove('active');
+            document.getElementById('mapPage').classList.add('active');
+            renderMap();
+        }
+
+        function updateUI() {
+            document.getElementById('money').textContent = game.money;
+            document.getElementById('pop').textContent = game.pop;
+        }
+
+        function toast(msg, type='error') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show' + (type==='success'?' success':'');
+            setTimeout(()=>t.classList.remove('show'), 2000);
+        }
+
+        function sleep(ms) { return new Promise(r=>setTimeout(r, ms)); }
+
+        // ========== 火柴人战斗系统 ==========
+        let canvas, ctx;
+        
+        function initCanvas() {
+            canvas = document.getElementById('battleCanvas');
+            ctx = canvas.getContext('2d');
+            console.log('Canvas initialized:', canvas ? 'OK' : 'FAIL', canvas ? canvas.width + 'x' + canvas.height : '');
+        }
+        
+        // 兵种配置
+        const unitTypes = {
+            infantry: { name: '步兵', color: '#FF4444', hp: 100, atk: 15, speed: 2, range: 60, attackSpeed: 30 },
+            archer: { name: '弓兵', color: '#44AA44', hp: 80, atk: 20, speed: 1.5, range: 250, attackSpeed: 60 },
+            shield: { name: '盾兵', color: '#888888', hp: 150, atk: 10, speed: 1, range: 50, defense: 0.5, attackSpeed: 40 },
+            gunner: { name: '枪兵', color: '#FF8800', hp: 90, atk: 25, speed: 2.5, range: 80, attackSpeed: 45 },
+            spear: { name: '矛兵', color: '#FFAA00', hp: 90, atk: 25, speed: 2.5, range: 100, attackSpeed: 45 },
+            tank: { name: '坦克', color: '#444444', hp: 300, atk: 50, speed: 0.8, range: 350, attackSpeed: 90 }
+        };
+        
+        class StickMan {
+            constructor(x, y, team, type, level) {
+                this.x = x;
+                this.y = y;
+                this.team = team; // 'player' or 'enemy'
+                this.type = type;
+                this.level = level;
+                this.direction = team === 'player' ? 1 : -1;
+                
+                const cfg = unitTypes[type];
+                this.maxHp = cfg.hp * (1 + (level - 1) * 0.3);
+                this.hp = this.maxHp;
+                this.atk = cfg.atk * (1 + (level - 1) * 0.2);
+                this.speed = cfg.speed;
+                this.range = cfg.range;
+                this.attackSpeed = cfg.attackSpeed;
+                this.color = team === 'player' ? cfg.color : '#4444FF';
+                this.defense = cfg.defense || 0;
+                
+                this.alive = true;
+                this.state = 'idle';
+                this.attackCooldown = 0;
+                this.target = null;
+                this.animFrame = 0;
+                this.effects = [];
+            }
+            
+            findTarget(enemies) {
+                let closest = null, closestDist = Infinity;
+                for (const enemy of enemies) {
+                    if (enemy.alive) {
+                        const dist = Math.abs(enemy.x - this.x);
+                        if (dist < closestDist) {
+                            closestDist = dist;
+                            closest = enemy;
+                        }
+                    }
+                }
+                this.target = closest;
+            }
+            
+            update(enemies, projectiles) {
+                if (!this.alive) return;
+                
+                this.findTarget(enemies);
+                if (this.attackCooldown > 0) this.attackCooldown--;
+                this.animFrame++;
+                
+                // 更新特效
+                for (let i = this.effects.length - 1; i >= 0; i--) {
+                    this.effects[i].frame++;
+                    if (this.effects[i].frame > this.effects[i].duration) {
+                        this.effects.splice(i, 1);
+                    }
+                }
+                
+                if (this.target && this.target.alive) {
+                    const dist = Math.abs(this.target.x - this.x);
+                    
+                    if (dist <= this.range) {
+                        if (this.attackCooldown <= 0) {
+                            this.attack(projectiles);
+                            this.attackCooldown = this.attackSpeed;
+                            this.state = 'attack';
+                        }
+                    } else {
+                        this.state = 'move';
+                        this.x += this.target.x > this.x ? this.speed : -this.speed;
+                        this.direction = this.target.x > this.x ? 1 : -1;
+                    }
+                } else {
+                    this.state = 'idle';
+                }
+            }
+            
+            attack(projectiles) {
+                const cfg = unitTypes[this.type];
+                
+                if (this.type === 'infantry') {
+                    // 挥刀
+                    this.effects.push({ type: 'slash', frame: 0, duration: 15 });
+                    this.target.takeDamage(this.atk);
+                    
+                } else if (this.type === 'archer') {
+                    // 射箭
+                    projectiles.push(new Arrow(this.x, this.y - 40, this.target, this.atk, this.team));
+                    
+                } else if (this.type === 'shield') {
+                    // 盾击
+                    this.effects.push({ type: 'shield_bash', frame: 0, duration: 20 });
+                    this.target.takeDamage(this.atk);
+                    
+                } else if (this.type === 'spear' || this.type === 'gunner') {
+                    // 冲刺/刺击
+                    this.effects.push({ type: 'lunge', frame: 0, duration: 15 });
+                    this.x += 20 * this.direction;
+                    this.target.takeDamage(this.atk);
+                    
+                } else if (this.type === 'tank') {
+                    // 开炮
+                    projectiles.push(new Shell(this.x, this.y - 30, this.target, this.atk, this.team));
+                }
+            }
+            
+            takeDamage(damage) {
+                damage = Math.floor(damage * (1 - this.defense));
+                this.hp -= damage;
+                
+                // 显示伤害数字
+                this.effects.push({
+                    type: 'damage', value: damage, frame: 0, duration: 30,
+                    x: this.x, y: this.y - 50
+                });
+                
+                if (this.hp <= 0) {
+                    this.hp = 0;
+                    this.alive = false;
+                    this.state = 'dead';
+                }
+            }
+            
+            draw(ctx) {
+                if (!this.alive) {
+                    this.drawDead(ctx);
+                    return;
+                }
+                
+                this.drawStickMan(ctx);
+                this.drawWeapon(ctx);
+                this.drawEffects(ctx);
+                this.drawHealthBar(ctx);
+            }
+            
+            drawStickMan(ctx) {
+                const x = this.x, y = this.y;
+                const walk = this.state === 'move' ? Math.sin(this.animFrame * 0.3) * 3 : 0;
+                
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+                
+                // 头
+                ctx.beginPath();
+                ctx.arc(x, y - 70, 8, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // 身体
+                ctx.beginPath();
+                ctx.moveTo(x, y - 62);
+                ctx.lineTo(x, y - 35);
+                ctx.stroke();
+                
+                // 手臂
+                if (this.state === 'attack') {
+                    if (this.type === 'infantry') {
+                        const angle = Math.sin(this.animFrame * 0.5) * 1.5;
+                        const handX = x + 25 * this.direction * Math.cos(angle);
+                        const handY = y - 50 + 20 * Math.sin(angle);
+                        ctx.beginPath();
+                        ctx.moveTo(x, y - 50);
+                        ctx.lineTo(handX, handY);
+                        ctx.stroke();
+                    } else {
+                        ctx.beginPath();
+                        ctx.moveTo(x, y - 50);
+                        ctx.lineTo(x + 15 * this.direction, y - 45);
+                        ctx.stroke();
+                    }
+                } else {
+                    ctx.beginPath();
+                    ctx.moveTo(x, y - 50);
+                    ctx.lineTo(x + 12 * this.direction, y - 45 + walk);
+                    ctx.stroke();
+                }
+                
+                // 腿
+                const legSwing = this.state === 'move' ? Math.sin(this.animFrame * 0.5) * 8 : 0;
+                ctx.beginPath();
+                ctx.moveTo(x, y - 35);
+                ctx.lineTo(x + legSwing, y - 15);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y - 35);
+                ctx.lineTo(x - legSwing, y - 15);
+                ctx.stroke();
+            }
+            
+            drawWeapon(ctx) {
+                const x = this.x, y = this.y;
+                
+                if (this.type === 'infantry') {
+                    // 刀
+                    const handX = x + 20 * this.direction;
+                    const handY = y - 50;
+                    ctx.strokeStyle = '#888';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(handX, handY);
+                    ctx.lineTo(handX + 25 * this.direction, handY - 10);
+                    ctx.stroke();
+                    
+                } else if (this.type === 'archer') {
+                    // 弓
+                    ctx.strokeStyle = '#8B4513';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(x - 8 * this.direction, y - 45, 15, 0.5, 2.5);
+                    ctx.stroke();
+                    
+                } else if (this.type === 'shield') {
+                    // 盾
+                    ctx.fillStyle = '#8B4513';
+                    ctx.beginPath();
+                    ctx.ellipse(x + 18 * this.direction, y - 55, 12, 18, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                } else if (this.type === 'spear' || this.type === 'gunner') {
+                    // 长矛/枪
+                    ctx.strokeStyle = '#8B4513';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(x + 15 * this.direction, y - 20);
+                    ctx.lineTo(x + 55 * this.direction, y - 70);
+                    ctx.stroke();
+                    
+                } else if (this.type === 'tank') {
+                    // 坦克炮管
+                    ctx.fillStyle = '#444';
+                    ctx.fillRect(x + 30 * this.direction, y - 45, 40, 8);
+                }
+            }
+            
+            drawEffects(ctx) {
+                for (const effect of this.effects) {
+                    if (effect.type === 'slash') {
+                        // 刀光
+                        const alpha = 1 - (effect.frame / effect.duration);
+                        ctx.fillStyle = `rgba(255, 255, 150, ${alpha})`;
+                        ctx.beginPath();
+                        ctx.moveTo(this.x + 30 * this.direction, this.y - 55);
+                        ctx.lineTo(this.x + 60 * this.direction, this.y - 35);
+                        ctx.lineTo(this.x + 50 * this.direction, this.y - 20);
+                        ctx.fill();
+                        
+                    } else if (effect.type === 'shield_bash') {
+                        // 盾击波纹
+                        const size = 20 + effect.frame * 2;
+                        ctx.strokeStyle = `rgba(200, 200, 200, ${1 - effect.frame / effect.duration})`;
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(this.x + 25 * this.direction, this.y - 40, size, 0, Math.PI * 2);
+                        ctx.stroke();
+                        
+                    } else if (effect.type === 'lunge') {
+                        // 冲刺残影
+                        for (let i = 0; i < 3; i++) {
+                            const offset = (i + 1) * 15 * this.direction;
+                            ctx.fillStyle = `rgba(255, 255, 0, ${0.3 - i * 0.1})`;
+                            ctx.beginPath();
+                            ctx.arc(this.x - offset, this.y - 50, 5, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        
+                    } else if (effect.type === 'damage') {
+                        // 伤害数字
+                        const y = effect.y - effect.frame * 2;
+                        ctx.fillStyle = `rgba(255, 0, 0, ${1 - effect.frame / effect.duration})`;
+                        ctx.font = 'bold 16px Arial';
+                        ctx.fillText(`-${effect.value}`, effect.x - 10, y);
+                    }
+                }
+            }
+            
+            drawHealthBar(ctx) {
+                const barWidth = 40;
+                const barHeight = 5;
+                const x = this.x - barWidth / 2;
+                const y = this.y - 90;
+                
+                // 背景
+                ctx.fillStyle = '#000';
+                ctx.fillRect(x, y, barWidth, barHeight);
+                
+                // 血量
+                const hpPercent = this.hp / this.maxHp;
+                ctx.fillStyle = hpPercent > 0.6 ? '#0A0' : hpPercent > 0.3 ? '#AA0' : '#A00';
+                ctx.fillRect(x, y, barWidth * hpPercent, barHeight);
+            }
+            
+            drawDead(ctx) {
+                const x = this.x, y = this.y;
+                ctx.strokeStyle = '#888';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(x, y - 10, 8, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y - 2);
+                ctx.lineTo(x + 20 * this.direction, y);
+                ctx.stroke();
+            }
+        }
+        
+        class Arrow {
+            constructor(x, y, target, damage, team) {
+                this.x = x;
+                this.y = y;
+                this.target = target;
+                this.damage = damage;
+                this.team = team;
+                this.speed = 8;
+                this.alive = true;
+            }
+            
+            update() {
+                if (!this.alive || !this.target.alive) {
+                    this.alive = false;
+                    return;
+                }
+                
+                const dx = this.target.x - this.x;
+                const dy = (this.target.y - 40) - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < 10) {
+                    this.target.takeDamage(this.damage);
+                    this.alive = false;
+                } else {
+                    this.x += (dx / dist) * this.speed;
+                    this.y += (dy / dist) * this.speed;
+                }
+            }
+            
+            draw(ctx) {
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 2;
+                const angle = Math.atan2(this.target.y - 40 - this.y, this.target.x - this.x);
+                const endX = this.x - Math.cos(angle) * 15;
+                const endY = this.y - Math.sin(angle) * 15;
+                ctx.beginPath();
+                ctx.moveTo(endX, endY);
+                ctx.lineTo(this.x, this.y);
+                ctx.stroke();
+            }
+        }
+        
+        class Shell {
+            constructor(x, y, target, damage, team) {
+                this.x = x;
+                this.y = y;
+                this.target = target;
+                this.damage = damage;
+                this.team = team;
+                this.speed = 6;
+                this.alive = true;
+                this.trail = [];
+            }
+            
+            update() {
+                if (!this.alive) return;
+                
+                this.trail.push({ x: this.x, y: this.y });
+                if (this.trail.length > 10) this.trail.shift();
+                
+                const dx = this.target.x - this.x;
+                const dy = (this.target.y - 30) - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < 15) {
+                    this.target.takeDamage(this.damage);
+                    this.alive = false;
+                } else {
+                    this.x += (dx / dist) * this.speed;
+                    this.y += (dy / dist) * this.speed;
+                }
+            }
+            
+            draw(ctx) {
+                // 轨迹
+                for (let i = 0; i < this.trail.length; i++) {
+                    const alpha = i / this.trail.length;
+                    ctx.fillStyle = `rgba(255, ${100 + i * 15}, 0, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(this.trail[i].x, this.trail[i].y, 2 + i / 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                // 炮弹
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // 战斗场景渲染
+        let battleUnits = [];
+        let battleProjectiles = [];
+        let battleAnimationId = null;
+        
+        function initBattleScene(myUnits, enemyUnits) {
+            battleUnits = [];
+            battleProjectiles = [];
+            
+            // 创建我方单位
+            myUnits.forEach((u, i) => {
+                battleUnits.push(new StickMan(100 + i * 80, 350, 'player', u.type, u.lv));
+            });
+            
+            // 创建敌方单位
+            enemyUnits.forEach((u, i) => {
+                battleUnits.push(new StickMan(700 - i * 80, 350, 'enemy', u.type, u.lv));
+            });
+        }
+        
+        function renderBattleFrame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制地面
+            ctx.fillStyle = '#228B22';
+            ctx.fillRect(0, 280, canvas.width, 120);
+            
+            // 更新和绘制投射物
+            for (let i = battleProjectiles.length - 1; i >= 0; i--) {
+                battleProjectiles[i].update();
+                battleProjectiles[i].draw(ctx);
+                if (!battleProjectiles[i].alive) {
+                    battleProjectiles.splice(i, 1);
+                }
+            }
+            
+            // 更新和绘制单位
+            const myTeam = battleUnits.filter(u => u.team === 'player');
+            const enemyTeam = battleUnits.filter(u => u.team === 'enemy');
+            
+            for (const unit of battleUnits) {
+                const enemies = unit.team === 'player' ? enemyTeam : myTeam;
+                unit.update(enemies, battleProjectiles);
+                unit.draw(ctx);
+            }
+        }
+        
+        function startBattleAnimation() {
+            if (battleAnimationId) cancelAnimationFrame(battleAnimationId);
+            
+            function animate() {
+                renderBattleFrame();
+                battleAnimationId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+        
+        function stopBattleAnimation() {
+            if (battleAnimationId) {
+                cancelAnimationFrame(battleAnimationId);
+                battleAnimationId = null;
+            }
+        }
+
+        // 页面切换时停止动画
+        window.addEventListener('beforeunload', stopBattleAnimation);
+
+        initTerr();
+        updateUI();
+    </script>
+</body>
+</html>
