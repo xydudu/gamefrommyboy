@@ -128,6 +128,49 @@
         .btn-result.victory:hover { background: linear-gradient(145deg, #2ecc71, #27ae60); transform: translateY(-2px); }
         .btn-result.defeat { background: linear-gradient(145deg, #e74c3c, #ff6b6b); color: white; }
         .btn-result.defeat:hover { background: linear-gradient(145deg, #ff6b6b, #e74c3c); transform: translateY(-2px); }
+        /* 战斗过程动画界面 */
+        .battle-process-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1a1a2e 0%, #0f0f23 100%); z-index: 3000; justify-content: center; align-items: center; }
+        .battle-process-overlay.active { display: flex; }
+        .battle-process-container { width: 90%; max-width: 900px; padding: 30px; }
+        .battle-process-header { text-align: center; margin-bottom: 30px; }
+        .battle-process-title { font-size: 32px; font-weight: bold; background: linear-gradient(45deg, #e94560, #ff6b6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+        .battle-process-subtitle { font-size: 16px; color: #888; }
+        .battle-arena { display: flex; justify-content: space-between; align-items: center; margin: 40px 0; position: relative; }
+        .battle-arena::before { content: 'VS'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 48px; font-weight: bold; color: #e94560; text-shadow: 0 0 30px rgba(233,69,96,0.5); animation: vsPulse 1.5s ease infinite; }
+        @keyframes vsPulse { 0%,100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.2); } }
+        .battle-side { text-align: center; flex: 1; }
+        .battle-side.enemy { padding-right: 80px; }
+        .battle-side.player { padding-left: 80px; }
+        .side-icon { font-size: 80px; margin-bottom: 15px; animation: sideFloat 2s ease infinite; }
+        @keyframes sideFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .side-name { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+        .side-hp-bar { width: 200px; height: 20px; background: rgba(0,0,0,0.5); border-radius: 10px; margin: 0 auto 10px; overflow: hidden; border: 2px solid #555; }
+        .side-hp-fill { height: 100%; border-radius: 8px; transition: width 0.5s ease; }
+        .side-hp-fill.enemy { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+        .side-hp-fill.player { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+        .side-hp-text { font-size: 14px; color: #aaa; }
+        .battle-actions { background: rgba(0,0,0,0.4); border-radius: 15px; padding: 20px; height: 200px; overflow-y: auto; border: 2px solid #3498db; margin-bottom: 20px; }
+        .battle-actions-title { text-align: center; font-size: 16px; color: #3498db; margin-bottom: 15px; font-weight: bold; }
+        .action-entry { display: flex; align-items: center; padding: 10px; margin-bottom: 8px; border-radius: 8px; animation: actionSlide 0.3s ease; }
+        @keyframes actionSlide { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .action-entry.player { background: rgba(52,152,219,0.2); border-left: 4px solid #3498db; }
+        .action-entry.enemy { background: rgba(231,76,60,0.2); border-left: 4px solid #e74c3c; }
+        .action-entry.critical { background: rgba(243,156,18,0.3); border-left: 4px solid #f39c12; animation: criticalShake 0.5s ease; }
+        @keyframes criticalShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .action-icon { font-size: 24px; margin-right: 15px; }
+        .action-text { flex: 1; font-size: 15px; }
+        .action-damage { font-size: 20px; font-weight: bold; }
+        .action-damage.player { color: #3498db; }
+        .action-damage.enemy { color: #e74c3c; }
+        .action-damage.critical { color: #f39c12; font-size: 24px; text-shadow: 0 0 10px rgba(243,156,18,0.5); }
+        .battle-skip-btn { display: block; width: 200px; margin: 0 auto; padding: 12px; background: rgba(255,255,255,0.1); color: #aaa; border: 2px solid #555; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.3s ease; }
+        .battle-skip-btn:hover { background: rgba(255,255,255,0.2); color: #fff; border-color: #888; }
+        /* 伤害数字动画 */
+        .damage-popup { position: absolute; font-size: 36px; font-weight: bold; animation: damageFloat 1s ease forwards; pointer-events: none; }
+        @keyframes damageFloat { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-50px) scale(1.5); opacity: 0; } }
+        .damage-popup.player { color: #3498db; text-shadow: 0 0 20px rgba(52,152,219,0.8); }
+        .damage-popup.enemy { color: #e74c3c; text-shadow: 0 0 20px rgba(231,76,60,0.8); }
+        .damage-popup.critical { color: #f39c12; font-size: 48px; text-shadow: 0 0 30px rgba(243,156,18,1); }
         .action-bar { display: flex; justify-content: space-between; gap: 15px; }
         .btn-back { background: linear-gradient(145deg, #7f8c8d, #95a5a6); color: white; padding: 15px 30px; font-size: 16px; border: none; border-radius: 10px; cursor: pointer; }
         .btn-battle { background: linear-gradient(145deg, #e94560, #ff6b6b); color: white; padding: 15px 50px; font-size: 20px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; }
@@ -227,6 +270,43 @@
                 </div>
             </div>
             <button class="btn-result" id="resultButton" onclick="closeBattleResult()">继续征战</button>
+        </div>
+    </div>
+
+    <!-- 战斗过程动画界面 -->
+    <div class="battle-process-overlay" id="battleProcessModal">
+        <div class="battle-process-container">
+            <div class="battle-process-header">
+                <div class="battle-process-title">⚔️ 战斗进行中</div>
+                <div class="battle-process-subtitle" id="processSubtitle">第 1 回合</div>
+            </div>
+            
+            <div class="battle-arena">
+                <div class="battle-side enemy">
+                    <div class="side-icon" id="enemySideIcon">🏰</div>
+                    <div class="side-name" id="enemySideName">黑暗城堡</div>
+                    <div class="side-hp-bar">
+                        <div class="side-hp-fill enemy" id="enemyHpBar" style="width: 100%"></div>
+                    </div>
+                    <div class="side-hp-text" id="enemyHpText">1000 / 1000</div>
+                </div>
+                
+                <div class="battle-side player">
+                    <div class="side-icon">👑</div>
+                    <div class="side-name">皇家军团</div>
+                    <div class="side-hp-bar">
+                        <div class="side-hp-fill player" id="playerHpBar" style="width: 100%"></div>
+                    </div>
+                    <div class="side-hp-text" id="playerHpText">500 / 500</div>
+                </div>
+            </div>
+            
+            <div class="battle-actions" id="battleActions">
+                <div class="battle-actions-title">📜 战斗日志</div>
+                <!-- 动态生成战斗动作 -->
+            </div>
+            
+            <button class="battle-skip-btn" onclick="skipBattleProcess()">⏩ 跳过战斗</button>
         </div>
     </div>
 
@@ -410,72 +490,223 @@
                 return; 
             }
             
+            // 显示战斗过程界面
+            showBattleProcess();
+        }
+
+        let battleProcessData = null;
+        let currentRound = 0;
+        let battleInterval = null;
+
+        function showBattleProcess() {
             const totalAttack = gameData.recruitedUnits.reduce((sum, u) => sum + u.attack, 0);
             const totalDefense = gameData.recruitedUnits.reduce((sum, u) => sum + u.hp, 0);
             const enemyAttack = gameData.currentTarget.attack;
             const enemyDefense = gameData.currentTarget.defense;
             
+            battleProcessData = {
+                playerMaxHp: totalDefense,
+                playerHp: totalDefense,
+                playerAttack: totalAttack,
+                enemyMaxHp: enemyDefense,
+                enemyHp: enemyDefense,
+                enemyAttack: enemyAttack,
+                enemyName: gameData.currentTarget.name,
+                enemyIcon: gameData.currentTarget.icon,
+                logs: [],
+                round: 1,
+                isFinished: false
+            };
+            
+            // 初始化界面
+            document.getElementById('enemySideIcon').textContent = battleProcessData.enemyIcon;
+            document.getElementById('enemySideName').textContent = battleProcessData.enemyName;
+            document.getElementById('enemyHpText').textContent = `${battleProcessData.enemyHp} / ${battleProcessData.enemyMaxHp}`;
+            document.getElementById('playerHpText').textContent = `${battleProcessData.playerHp} / ${battleProcessData.playerMaxHp}`;
+            document.getElementById('enemyHpBar').style.width = '100%';
+            document.getElementById('playerHpBar').style.width = '100%';
+            document.getElementById('battleActions').innerHTML = '<div class="battle-actions-title">📜 战斗日志</div>';
+            document.getElementById('processSubtitle').textContent = '第 1 回合';
+            
+            document.getElementById('battleProcessModal').classList.add('active');
+            
+            // 开始战斗动画
+            currentRound = 1;
+            battleInterval = setInterval(() => processBattleRound(), 800);
+        }
+
+        function processBattleRound() {
+            if (!battleProcessData || battleProcessData.isFinished) return;
+            
+            const data = battleProcessData;
+            const actionsContainer = document.getElementById('battleActions');
+            
+            // 我方攻击
+            const playerDamage = Math.min(data.playerAttack, data.enemyHp);
+            const isPlayerCrit = Math.random() > 0.8; // 20%暴击
+            const actualPlayerDamage = isPlayerCrit ? Math.floor(playerDamage * 1.5) : playerDamage;
+            
+            data.enemyHp = Math.max(0, data.enemyHp - actualPlayerDamage);
+            
+            // 添加我方攻击日志
+            const playerAction = document.createElement('div');
+            playerAction.className = `action-entry player ${isPlayerCrit ? 'critical' : ''}`;
+            playerAction.innerHTML = `
+                <span class="action-icon">⚔️</span>
+                <span class="action-text">我方发动${isPlayerCrit ? '暴击' : '攻击'}！</span>
+                <span class="action-damage player ${isPlayerCrit ? 'critical' : ''}">-${actualPlayerDamage}</span>
+            `;
+            actionsContainer.appendChild(playerAction);
+            actionsContainer.scrollTop = actionsContainer.scrollHeight;
+            
+            // 更新敌方血条
+            updateHpBar('enemy', data.enemyHp, data.enemyMaxHp);
+            
+            if (data.enemyHp <= 0) {
+                finishBattleProcess(true);
+                return;
+            }
+            
+            // 敌方攻击（延迟一点）
+            setTimeout(() => {
+                if (data.isFinished) return;
+                
+                const enemyDamage = Math.min(data.enemyAttack, data.playerHp);
+                const isEnemyCrit = Math.random() > 0.85; // 15%暴击
+                const actualEnemyDamage = isEnemyCrit ? Math.floor(enemyDamage * 1.5) : enemyDamage;
+                
+                data.playerHp = Math.max(0, data.playerHp - actualEnemyDamage);
+                
+                // 添加敌方攻击日志
+                const enemyAction = document.createElement('div');
+                enemyAction.className = `action-entry enemy ${isEnemyCrit ? 'critical' : ''}`;
+                enemyAction.innerHTML = `
+                    <span class="action-icon">💥</span>
+                    <span class="action-text">敌方发动${isEnemyCrit ? '暴击' : '攻击'}！</span>
+                    <span class="action-damage enemy ${isEnemyCrit ? 'critical' : ''}">-${actualEnemyDamage}</span>
+                `;
+                actionsContainer.appendChild(enemyAction);
+                actionsContainer.scrollTop = actionsContainer.scrollHeight;
+                
+                // 更新我方血条
+                updateHpBar('player', data.playerHp, data.playerMaxHp);
+                
+                if (data.playerHp <= 0) {
+                    finishBattleProcess(false);
+                    return;
+                }
+                
+                // 下一回合
+                data.round++;
+                document.getElementById('processSubtitle').textContent = `第 ${data.round} 回合`;
+                
+                if (data.round > 50) {
+                    // 超过50回合，按血量比例判定
+                    finishBattleProcess(data.playerHp > data.enemyHp);
+                }
+            }, 400);
+        }
+
+        function updateHpBar(side, current, max) {
+            const percentage = (current / max) * 100;
+            document.getElementById(`${side}HpBar`).style.width = `${percentage}%`;
+            document.getElementById(`${side}HpText`).textContent = `${current} / ${max}`;
+        }
+
+        function finishBattleProcess(isVictory) {
+            if (battleProcessData.isFinished) return;
+            battleProcessData.isFinished = true;
+            
+            if (battleInterval) {
+                clearInterval(battleInterval);
+                battleInterval = null;
+            }
+            
+            const data = battleProcessData;
+            
+            // 延迟一下显示结果
+            setTimeout(() => {
+                document.getElementById('battleProcessModal').classList.remove('active');
+                
+                // 计算统计数据
+                const damageDealt = data.playerAttack * (data.round - (data.enemyHp > 0 ? 0 : 1));
+                const damageTaken = data.enemyAttack * (data.round - 1);
+                
+                if (isVictory) {
+                    gameData.gold += gameData.currentTarget.reward;
+                }
+                
+                // 收集所有日志
+                const logs = [];
+                logs.push({ type: 'result', text: `⚔️ 战斗开始！我方 ${gameData.recruitedUnits.length} 个单位 vs ${data.enemyName}` });
+                
+                const actionEntries = document.querySelectorAll('.action-entry');
+                actionEntries.forEach(entry => {
+                    const text = entry.querySelector('.action-text')?.textContent || '';
+                    const damage = entry.querySelector('.action-damage')?.textContent || '';
+                    let type = 'player';
+                    if (entry.classList.contains('enemy')) type = 'enemy';
+                    if (entry.classList.contains('critical')) type = 'result';
+                    logs.push({ type, text: `${text} ${damage}` });
+                });
+                
+                if (isVictory) {
+                    logs.push({ type: 'result', text: `🎉 胜利！获得 💰 ${gameData.currentTarget.reward}` });
+                } else {
+                    logs.push({ type: 'result', text: '💀 失败！军团全军覆没' });
+                }
+                
+                showBattleResult({
+                    victory: isVictory,
+                    title: isVictory ? '胜利！' : '失败！',
+                    subtitle: isVictory ? `${data.enemyName} 已被征服` : '您的军团需要更强大的力量',
+                    icon: isVictory ? '🏆' : '💀',
+                    logs: logs,
+                    stats: [
+                        { label: '造成伤害', value: damageDealt, type: 'damage' },
+                        { label: '受到伤害', value: damageTaken, type: 'damage' },
+                        { label: '战斗回合', value: data.round, type: 'normal' },
+                        { label: isVictory ? '获得金币' : '损失兵力', value: isVictory ? `+${gameData.currentTarget.reward}` : gameData.recruitedUnits.length, type: isVictory ? 'gold' : 'damage' }
+                    ]
+                });
+                
+                updateGold();
+                gameData.recruitedUnits = [];
+                updatePlayerStats();
+                updateRecruitedList();
+                renderUnits();
+            }, 1000);
+        }
+
+        function skipBattleProcess() {
+            if (battleInterval) {
+                clearInterval(battleInterval);
+                battleInterval = null;
+            }
+            
+            // 快速计算战斗结果
+            const data = battleProcessData;
+            const totalAttack = data.playerAttack;
+            const totalDefense = data.playerMaxHp;
+            const enemyAttack = data.enemyAttack;
+            const enemyDefense = data.enemyMaxHp;
+            
             let playerHp = totalDefense, enemyHp = enemyDefense;
-            let logs = [];
-            let round = 1;
+            let round = 0;
             
-            logs.push({ type: 'result', text: `⚔️ 战斗开始！我方 ${gameData.recruitedUnits.length} 个单位 vs ${gameData.currentTarget.name}` });
-            
-            while (playerHp > 0 && enemyHp > 0) {
-                // 我方攻击
-                const playerDamage = Math.min(totalAttack, enemyHp);
+            while (playerHp > 0 && enemyHp > 0 && round < 50) {
                 enemyHp -= totalAttack;
-                logs.push({ 
-                    type: 'player', 
-                    text: `第${round}回合 - 我方造成 ${playerDamage} 点伤害`,
-                    detail: `敌方剩余: ${Math.max(0, enemyHp)} HP`
-                });
-                
                 if (enemyHp <= 0) break;
-                
-                // 敌方攻击
-                const enemyDamage = Math.min(enemyAttack, playerHp);
                 playerHp -= enemyAttack;
-                logs.push({ 
-                    type: 'enemy', 
-                    text: `第${round}回合 - 敌方造成 ${enemyDamage} 点伤害`,
-                    detail: `我方剩余: ${Math.max(0, playerHp)} HP`
-                });
-                
                 round++;
-                if (round > 50) break; // 防止无限循环
             }
             
             const isVictory = playerHp > 0;
-            const damageDealt = totalAttack * (round - (enemyHp > 0 ? 0 : 1));
-            const damageTaken = enemyAttack * (round - 1);
+            data.round = round || 1;
+            data.playerHp = Math.max(0, playerHp);
+            data.enemyHp = Math.max(0, enemyHp);
             
-            if (isVictory) {
-                gameData.gold += gameData.currentTarget.reward;
-                logs.push({ type: 'result', text: `🎉 胜利！获得 💰 ${gameData.currentTarget.reward}` });
-            } else {
-                logs.push({ type: 'result', text: '💀 失败！军团全军覆没' });
-            }
-            
-            showBattleResult({
-                victory: isVictory,
-                title: isVictory ? '胜利！' : '失败！',
-                subtitle: isVictory ? `${gameData.currentTarget.name} 已被征服` : '您的军团需要更强大的力量',
-                icon: isVictory ? '🏆' : '💀',
-                logs: logs,
-                stats: [
-                    { label: '造成伤害', value: damageDealt, type: 'damage' },
-                    { label: '受到伤害', value: damageTaken, type: 'damage' },
-                    { label: '战斗回合', value: round - 1, type: 'normal' },
-                    { label: isVictory ? '获得金币' : '损失兵力', value: isVictory ? `+${gameData.currentTarget.reward}` : gameData.recruitedUnits.length, type: isVictory ? 'gold' : 'damage' }
-                ]
-            });
-            
-            updateGold();
-            gameData.recruitedUnits = [];
-            updatePlayerStats();
-            updateRecruitedList();
-            renderUnits();
+            finishBattleProcess(isVictory);
         }
 
         function showBattleResult(data) {
