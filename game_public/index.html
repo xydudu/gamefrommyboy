@@ -523,14 +523,17 @@
             const totalAttack = gameData.recruitedUnits.reduce((sum, u) => sum + u.attack, 0);
             const totalDefense = gameData.recruitedUnits.reduce((sum, u) => sum + u.hp, 0);
             // 随机攻击力：基础攻击 ± 随机范围
-            const randomOffset = Math.floor(Math.random() * gameData.currentTarget.attackRange * 2) - gameData.currentTarget.attackRange;
-            const enemyAttack = Math.max(1, gameData.currentTarget.attack + randomOffset);
+            const enemyRandomOffset = Math.floor(Math.random() * gameData.currentTarget.attackRange * 2) - gameData.currentTarget.attackRange;
+            const enemyAttack = Math.max(1, gameData.currentTarget.attack + enemyRandomOffset);
             const enemyDefense = gameData.currentTarget.defense;
+            // 我方攻击力也随机波动（±10%）
+            const playerRandomFactor = 0.9 + Math.random() * 0.2; // 0.9 ~ 1.1
+            const playerAttack = Math.max(1, Math.floor(totalAttack * playerRandomFactor));
             
             battleProcessData = {
                 playerMaxHp: totalDefense,
                 playerHp: totalDefense,
-                playerAttack: totalAttack,
+                playerAttack: playerAttack,
                 enemyMaxHp: enemyDefense,
                 enemyHp: enemyDefense,
                 enemyAttack: enemyAttack,
