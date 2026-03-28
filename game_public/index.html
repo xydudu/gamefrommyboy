@@ -189,7 +189,7 @@
     <div class="game-container">
         <div class="top-bar">
             <div class="game-title">⚔️ 征服者</div>
-            <div class="gold-display"><span>💰</span><span id="goldAmount">500</span></div>
+            <div class="gold-display"><span>💰</span><span id="goldAmount">500</span> <span style="color:#fff;font-size:18px;margin-left:20px;">👥 <span id="population">0</span>/<span id="maxPopulation">5</span> <button onclick="upgradePopulation()" style="margin-left:10px;padding:5px 10px;background:#f39c12;border:none;border-radius:5px;color:white;cursor:pointer;font-size:14px;">💰+1 人口 (100 金)</button></span></div>
         </div>
 
         <div class="map-view" id="mapView">
@@ -313,6 +313,7 @@
     <script>
         const gameData = {
             gold: 500,
+            maxPopulation: 5,
             currentTarget: null,
             recruitedUnits: [],
             targets: [
@@ -352,6 +353,7 @@
         }
 
         function updateGold() { document.getElementById('goldAmount').textContent = gameData.gold; }
+        function updatePopulation() { document.getElementById('population').textContent = gameData.recruitedUnits.length; document.getElementById('maxPopulation').textContent = gameData.maxPopulation; }
 
         function renderMap() {
             document.getElementById('mapGrid').innerHTML = gameData.targets.map(t => `
@@ -385,6 +387,7 @@
             document.getElementById('mapView').style.display = 'block';
             gameData.currentTarget = null;
             gameData.recruitedUnits = [];
+            updatePopulation();
         }
 
         function renderUnits() {
@@ -410,15 +413,30 @@
         }
 
         function recruitUnit(unitId) {
+            if (gameData.recruitedUnits.length >= gameData.maxPopulation) { alert(`⚠️ 人口已达上限！当前上限 ${gameData.maxPopulation}，可升级人口上限或返回减少兵力。`); return; }
             const unit = gameData.units.find(u => u.id === unitId);
             const stats = getUnitStats(unitId);
             if (gameData.gold >= stats.cost) {
                 gameData.gold -= stats.cost;
                 gameData.recruitedUnits.push({ id: unitId, name: unit.name, icon: unit.icon, attack: stats.attack, hp: stats.hp });
                 updateGold();
+                updatePopulation();
                 updatePlayerStats();
                 renderUnits();
                 updateRecruitedList();
+            }
+        }
+
+        function upgradePopulation() {
+            const upgradeCost = 100;
+            if (gameData.gold >= upgradeCost) {
+                gameData.gold -= upgradeCost;
+                gameData.maxPopulation += 1;
+                updateGold();
+                updatePopulation();
+                alert(`✅ 人口上限 +1！当前上限：${gameData.maxPopulation}`);
+            } else {
+                alert(`⚠️ 金币不足！升级人口上限需要 ${upgradeCost} 金币。`);
             }
         }
 
@@ -703,6 +721,7 @@
                 
                 updateGold();
                 gameData.recruitedUnits = [];
+                updatePopulation();
                 updatePlayerStats();
                 updateRecruitedList();
                 renderUnits();
@@ -786,6 +805,7 @@
 
         initUnitLevels();
         renderMap();
+        updatePopulation();
     </script>
 </body>
 </html>
