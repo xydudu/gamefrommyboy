@@ -73,8 +73,10 @@
             border-color: #ff6b6b;
         }
         .target-icon { 
-            font-size: 80px; 
-            margin-bottom: 15px; 
+            width: 80px; 
+            height: 80px; 
+            margin: 0 auto 15px;
+            object-fit: contain;
             filter: drop-shadow(0 8px 20px rgba(0,0,0,0.6));
         }
         .target-name { 
@@ -382,14 +384,14 @@
             currentTarget: null,
             recruitedUnits: [],
             targets: [
-                { id: 1, name: '边境哨站', icon: '🏚️', difficulty: 'hard', attack: 500, attackRange: 100, defense: 400, reward: 300 },
-                { id: 2, name: '强盗营地', icon: '⛺', difficulty: 'hard', attack: 280, attackRange: 150, defense: 250, reward: 500 },
-                { id: 3, name: '废弃城堡', icon: '🏰', difficulty: 'hard', attack: 320, attackRange: 200, defense: 280, reward: 700 },
-                { id: 4, name: '兽人部落', icon: '🏕️', difficulty: 'hard', attack: 350, attackRange: 250, defense: 300, reward: 1000 },
-                { id: 5, name: '黑暗要塞', icon: '🗿', difficulty: 'hard', attack: 400, attackRange: 300, defense: 350, reward: 1300 },
-                { id: 6, name: '龙之巢穴', icon: '🐉', difficulty: 'hard', attack: 500, attackRange: 350, defense: 400, reward: 1600 },
-                { id: 7, name: '恶魔王座', icon: '👹', difficulty: 'hard', attack: 600, attackRange: 400, defense: 500, reward: 1900 },
-                { id: 8, name: '虚空神殿', icon: '🔮', difficulty: 'hard', attack: 700, attackRange: 450, defense: 600, reward: 2200 }
+                { id: 1, name: '边境哨站', icon: 'https://cdn-icons-png.flaticon.com/512/263/263102.png', difficulty: 'hard', attack: 500, attackRange: 100, defense: 400, reward: 300 },
+                { id: 2, name: '强盗营地', icon: 'https://cdn-icons-png.flaticon.com/512/793/793682.png', difficulty: 'hard', attack: 280, attackRange: 150, defense: 250, reward: 500 },
+                { id: 3, name: '废弃城堡', icon: 'https://cdn-icons-png.flaticon.com/512/263/263065.png', difficulty: 'hard', attack: 320, attackRange: 200, defense: 280, reward: 700 },
+                { id: 4, name: '兽人部落', icon: 'https://cdn-icons-png.flaticon.com/512/263/263127.png', difficulty: 'hard', attack: 350, attackRange: 250, defense: 300, reward: 1000 },
+                { id: 5, name: '黑暗要塞', icon: 'https://cdn-icons-png.flaticon.com/512/263/263115.png', difficulty: 'hard', attack: 400, attackRange: 300, defense: 350, reward: 1300 },
+                { id: 6, name: '龙之巢穴', icon: 'https://cdn-icons-png.flaticon.com/512/616/616463.png', difficulty: 'hard', attack: 500, attackRange: 350, defense: 400, reward: 1600 },
+                { id: 7, name: '恶魔王座', icon: 'https://cdn-icons-png.flaticon.com/512/263/263132.png', difficulty: 'hard', attack: 600, attackRange: 400, defense: 500, reward: 1900 },
+                { id: 8, name: '虚空神殿', icon: 'https://cdn-icons-png.flaticon.com/512/263/263080.png', difficulty: 'hard', attack: 700, attackRange: 450, defense: 600, reward: 2200 }
             ],
             units: [
                 { id: 'infantry', name: '步兵', icon: '⚔️', unlocked: true, unlockCost: 0, baseCost: 50, baseAttack: 20, baseHp: 100, desc: '基础近战单位，攻守平衡' },
@@ -423,7 +425,7 @@
         function renderMap() {
             document.getElementById('mapGrid').innerHTML = gameData.targets.map(t => `
                 <div class="target-card" onclick="selectTarget(${t.id})">
-                    <div class="target-icon">${t.icon}</div>
+                    <img class="target-icon" src="${t.icon}" alt="${t.name}" onerror="this.style.display='none';this.nextElementSibling.textContent='${t.icon}'">
                     <div class="target-name">${t.name}</div>
                     <span class="target-difficulty difficulty-${t.difficulty}">${t.difficulty === 'easy' ? '简单' : t.difficulty === 'medium' ? '中等' : '困难'}</span>
                     <div class="target-reward">💰 ${t.reward}</div>
