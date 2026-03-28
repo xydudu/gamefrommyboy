@@ -27,16 +27,13 @@
         }
         .map-view { display: block; }
         .map-container {
-            background: 
-                linear-gradient(135deg, rgba(61,92,61,0.9) 0%, rgba(90,125,90,0.9) 50%, rgba(74,107,74,0.9) 100%),
-                repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(0,0,0,0.05) 50px, rgba(0,0,0,0.05) 100px),
-                repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(0,0,0,0.05) 50px, rgba(0,0,0,0.05) 100px);
-            border-radius: 20px; padding: 50px 40px; min-height: 700px; 
-            border: 5px solid #5d4e37;
+            background: linear-gradient(180deg, #1a2a3a 0%, #2a3a4a 100%);
+            border-radius: 15px; padding: 30px 20px; min-height: 650px; 
+            border: 3px solid #e94560;
             position: relative; overflow: hidden;
             box-shadow: 
-                inset 0 0 150px rgba(0,0,0,0.6),
-                0 10px 40px rgba(0,0,0,0.4);
+                inset 0 0 100px rgba(233,69,96,0.2),
+                0 10px 40px rgba(0,0,0,0.5);
         }
         .map-container::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -53,94 +50,52 @@
         }
         .map-grid { 
             display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 25px;
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 20px;
             position: relative;
             z-index: 2;
-            max-width: 900px;
+            max-width: 700px;
             margin: 0 auto;
         }
         .target-card {
-            background: linear-gradient(145deg, #6b6b6b, #4a4a4a);
-            border-radius: 12px; padding: 30px 20px; text-align: center; cursor: pointer;
-            border: 3px solid #8b7355; 
+            background: linear-gradient(180deg, #2a3a4a 0%, #1a2a3a 100%);
+            border-radius: 12px; padding: 25px 20px; text-align: center; cursor: pointer;
+            border: 2px solid #e94560; 
             transition: all 0.3s ease;
             position: relative;
-            box-shadow: 
-                0 15px 40px rgba(0,0,0,0.6),
-                inset 0 2px 15px rgba(255,255,255,0.1),
-                0 0 0 5px rgba(93,78,55,0.3);
-        }
-        .target-card::before {
-            content: ''; position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
-            width: 80px; height: 60px;
-            background: linear-gradient(180deg, #5a5a5a 0%, #3a3a3a 100%);
-            border: 3px solid #8b7355;
-            border-radius: 8px 8px 0 0;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-        }
-        .target-card::after {
-            content: '⚔️'; position: absolute; top: -45px; left: 50%; transform: translateX(-50%);
-            font-size: 28px; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.5));
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
         }
         .target-card:hover { 
-            transform: translateY(-10px) scale(1.05); 
-            box-shadow: 
-                0 25px 60px rgba(233,69,96,0.5),
-                inset 0 2px 15px rgba(255,255,255,0.15),
-                0 0 0 5px rgba(233,69,96,0.4);
-            border-color: #e94560;
-        }
-        .target-card.difficulty-hard { 
-            border-color: #e74c3c;
-            box-shadow: 0 15px 40px rgba(231,76,60,0.3), inset 0 2px 15px rgba(255,255,255,0.1);
-        }
-        .target-card.difficulty-medium { 
-            border-color: #f39c12;
-            box-shadow: 0 15px 40px rgba(243,156,18,0.3), inset 0 2px 15px rgba(255,255,255,0.1);
-        }
-        .target-card.difficulty-easy { 
-            border-color: #27ae60;
-            box-shadow: 0 15px 40px rgba(39,174,96,0.3), inset 0 2px 15px rgba(255,255,255,0.1);
+            transform: translateY(-5px); 
+            box-shadow: 0 15px 40px rgba(233,69,96,0.4);
+            border-color: #ff6b6b;
         }
         .target-icon { 
-            font-size: 72px; 
-            margin-bottom: 15px; 
-            filter: drop-shadow(0 8px 15px rgba(0,0,0,0.6));
-            position: relative;
-            z-index: 1;
+            font-size: 64px; 
+            margin-bottom: 12px; 
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
         }
         .target-name { 
-            font-size: 15px; 
+            font-size: 16px; 
             font-weight: bold; 
             margin-bottom: 10px; 
-            color: #fff; 
-            text-shadow: 0 3px 8px rgba(0,0,0,0.9);
-            position: relative;
-            z-index: 1;
+            color: #fff;
         }
         .target-difficulty { 
             display: inline-block; 
-            padding: 6px 18px; 
-            border-radius: 20px; 
-            font-size: 11px; 
-            font-weight: bold; 
-            text-transform: uppercase;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-            position: relative;
-            z-index: 1;
+            padding: 4px 16px; 
+            border-radius: 15px; 
+            font-size: 12px; 
+            font-weight: bold;
+            background: #e94560;
+            color: white;
+            margin-bottom: 8px;
         }
-        .difficulty-easy { background: linear-gradient(145deg, #27ae60, #1e8449); color: white; }
-        .difficulty-medium { background: linear-gradient(145deg, #f39c12, #d68910); color: white; }
-        .difficulty-hard { background: linear-gradient(145deg, #e74c3c, #c0392b); color: white; }
         .target-reward { 
-            margin-top: 15px; 
+            margin-top: 10px; 
             color: #ffd700; 
             font-weight: bold; 
-            text-shadow: 0 3px 8px rgba(0,0,0,0.9); 
-            font-size: 15px;
-            position: relative;
-            z-index: 1;
+            font-size: 14px;
         }
         .target-reward::before {
             content: '💰 ';
@@ -290,12 +245,15 @@
     <div class="game-container">
         <div class="top-bar">
             <div class="game-title">⚔️ 征服者</div>
-            <div class="gold-display"><span>💰</span><span id="goldAmount">500</span> <span style="color:#fff;font-size:18px;margin-left:20px;">👥 <span id="population">0</span>/<span id="maxPopulation">5</span> <button onclick="upgradePopulation()" style="margin-left:10px;padding:5px 10px;background:#f39c12;border:none;border-radius:5px;color:white;cursor:pointer;font-size:14px;">💰+1 人口 (100 金)</button></span></div>
+            <div class="gold-display">
+                <span>💰</span><span id="goldAmount">500</span>
+                <span style="color:#fff;font-size:16px;margin-left:15px;">👥 <span id="population">0</span>/<span id="maxPopulation">5</span></span>
+                <button onclick="upgradePopulation()" style="margin-left:10px;padding:6px 12px;background:#f39c12;border:none;border-radius:8px;color:white;cursor:pointer;font-size:13px;font-weight:bold;">+1 人口 (100 金)</button>
+            </div>
         </div>
 
         <div class="map-view" id="mapView">
             <div class="map-container">
-                <div class="map-title">⚔️ 征服者战场 ⚔️</div>
                 <div class="map-grid" id="mapGrid"></div>
             </div>
         </div>
