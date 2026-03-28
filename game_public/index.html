@@ -328,10 +328,10 @@
             units: [
                 { id: 'infantry', name: '步兵', icon: '⚔️', unlocked: true, unlockCost: 0, baseCost: 50, baseAttack: 20, baseHp: 100, desc: '基础近战单位，攻守平衡' },
                 { id: 'archer', name: '弓箭手', icon: '🏹', unlocked: false, unlockCost: 200, baseCost: 80, baseAttack: 35, baseHp: 60, desc: '远程攻击单位，高攻低防' },
-                { id: 'pikeman', name: '长矛兵', icon: '🔱', unlocked: false, unlockCost: 300, baseCost: 100, baseAttack: 25, baseHp: 120, desc: '重装防御单位，高血量' },
-                { id: 'shieldman', name: '盾兵', icon: '🛡️', unlocked: false, unlockCost: 400, baseCost: 120, baseAttack: 15, baseHp: 150, desc: '防御型单位，极高血量' },
-                { id: 'cavalry', name: '骑兵', icon: '🐴', unlocked: false, unlockCost: 500, baseCost: 150, baseAttack: 45, baseHp: 90, desc: '高速突击单位，高攻击' },
-                { id: 'tank', name: '坦克', icon: '⚙️', unlocked: false, unlockCost: 600, baseCost: 200, baseAttack: 60, baseHp: 200, desc: '终极战争机器，攻守兼备' }
+                { id: 'shieldman', name: '盾兵', icon: '🛡️', unlocked: false, unlockCost: 400, baseCost: 120, baseAttack: 15, baseHp: 150, desc: '防御型单位，极高血量', requires: 'archer' },
+                { id: 'pikeman', name: '长矛兵', icon: '🔱', unlocked: false, unlockCost: 300, baseCost: 100, baseAttack: 25, baseHp: 120, desc: '重装防御单位，高血量', requires: 'shieldman' },
+                { id: 'cavalry', name: '骑兵', icon: '🐴', unlocked: false, unlockCost: 500, baseCost: 150, baseAttack: 45, baseHp: 90, desc: '高速突击单位，高攻击', requires: 'pikeman' },
+                { id: 'tank', name: '坦克', icon: '⚙️', unlocked: false, unlockCost: 600, baseCost: 200, baseAttack: 60, baseHp: 200, desc: '终极战争机器，攻守兼备', requires: 'cavalry' }
             ],
             unitLevels: {}
         };
@@ -450,14 +450,27 @@
 
         function showUnlockModal() {
             document.getElementById('unlockGrid').innerHTML = gameData.units.map(unit => {
-                const canUnlock = !unit.unlocked && gameData.gold >= unit.unlockCost;
+                const prerequisiteUnlocked = !unit.requires || gameData.units.find(u => u.id === unit.requires)?.unlocked;
+                const canUnlock = !unit.unlocked && prerequisiteUnlocked && gameData.gold >= unit.unlockCost;
+                const lockedByPrereq = !unit.unlocked && !prerequisiteUnlocked;
+                
+                let statusText = unit.unlocked ? '✅ 已解锁' : `💰 ${unit.unlockCost}`;
+                let buttonText = canUnlock ? '解锁' : (lockedByPrereq ? '需先解锁前置兵种' : '金币不足');
+                let buttonClass = canUnlock ? 'can-unlock' : 'locked';
+                let buttonDisabled = !canUnlock ? 'disabled' : '';
+                
+                if (lockedByPrereq) {
+                    const prereqUnit = gameData.units.find(u => u.id === unit.requires);
+                    statusText = `🔒 需先解锁 ${prereqUnit?.name || '前置兵种'}`;
+                }
+                
                 return `
                     <div class="unlock-card ${unit.unlocked ? 'unlocked' : canUnlock ? 'can-unlock' : 'locked'}">
                         <div class="unlock-icon">${unit.icon}${!unit.unlocked ? '<span class="lock-overlay">🔒</span>' : ''}</div>
                         <div class="unlock-name">${unit.name}</div>
-                        <div class="unlock-cost">${unit.unlocked ? '✅ 已解锁' : `💰 ${unit.unlockCost}`}</div>
+                        <div class="unlock-cost">${statusText}</div>
                         <div class="unlock-desc">${unit.desc}</div>
-                        ${!unit.unlocked ? `<button class="btn-unlock-unit ${canUnlock ? 'can-unlock' : 'locked'}" onclick="unlockUnit('${unit.id}')" ${!canUnlock ? 'disabled' : ''}>${canUnlock ? '解锁' : '金币不足'}</button>` : '<button class="btn-unlock-unit unlocked" disabled>已拥有</button>'}
+                        ${!unit.unlocked ? `<button class="btn-unlock-unit ${buttonClass}" onclick="unlockUnit('${unit.id}')" ${buttonDisabled}>${buttonText}</button>` : '<button class="btn-unlock-unit unlocked" disabled>已拥有</button>'}
                     </div>
                 `;
             }).join('');
@@ -468,12 +481,17 @@
 
         function unlockUnit(unitId) {
             const unit = gameData.units.find(u => u.id === unitId);
-            if (!unit.unlocked && gameData.gold >= unit.unlockCost) {
+            const prerequisiteUnlocked = !unit.requires || gameData.units.find(u => u.id === unit.requires)?.unlocked;
+            
+            if (!unit.unlocked && prerequisiteUnlocked && gameData.gold >= unit.unlockCost) {
                 gameData.gold -= unit.unlockCost;
                 unit.unlocked = true;
                 updateGold();
                 renderUnits();
                 showUnlockModal();
+            } else if (!prerequisiteUnlocked) {
+                const prereqUnit = gameData.units.find(u => u.id === unit.requires);
+                alert(`⚠️ 需要先解锁 ${prereqUnit?.name || '前置兵种'} 才能解锁 ${unit.name}！`);
             }
         }
 
