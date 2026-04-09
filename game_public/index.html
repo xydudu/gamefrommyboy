@@ -52,60 +52,77 @@
         }
         .map-grid { 
             display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
+            grid-template-columns: repeat(4, 1fr); 
             gap: 20px;
             position: relative;
             z-index: 2;
-            max-width: 700px;
+            max-width: 1200px;
             margin: 0 auto;
         }
         .target-card {
-            background: linear-gradient(180deg, #2a3a5a 0%, #1a2a4a 100%);
             border-radius: 20px; padding: 30px 25px; text-align: center; cursor: pointer;
             border: 2px solid #e94560; 
             transition: all 0.3s ease;
             position: relative;
             box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+            /* 背景图样式 - 铺满整个卡片 */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding-top: 20px;
+            overflow: hidden;
+        }
+        .target-card::before {
+            /* 半透明遮罩，让文字更清晰 */
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);
+            z-index: 1;
+        }
+        .target-card > * {
+            position: relative;
+            z-index: 2;
         }
         .target-card:hover { 
             transform: translateY(-8px) scale(1.02); 
             box-shadow: 0 20px 50px rgba(233,69,96,0.4);
             border-color: #ff6b6b;
         }
-        .target-icon { 
-            width: 80px; 
-            height: 80px; 
-            margin: 0 auto 15px;
-            object-fit: contain;
-            filter: drop-shadow(0 8px 20px rgba(0,0,0,0.6));
+        .target-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: auto;
+            padding-bottom: 10px;
         }
         .target-name { 
             font-size: 18px; 
             font-weight: bold; 
-            margin-bottom: 12px; 
             color: #fff;
             text-shadow: 0 2px 8px rgba(0,0,0,0.8);
         }
-        .target-difficulty { 
-            display: inline-block; 
-            padding: 5px 20px; 
-            border-radius: 20px; 
-            font-size: 13px; 
-            font-weight: bold;
-            background: linear-gradient(145deg, #e94560, #c0392b);
-            color: white;
-            margin-bottom: 10px;
-            box-shadow: 0 3px 10px rgba(233,69,96,0.4);
-        }
         .target-reward { 
-            margin-top: 12px; 
             color: #ffd700; 
             font-weight: bold; 
-            font-size: 16px;
+            font-size: 14px;
             text-shadow: 0 2px 8px rgba(0,0,0,0.8);
         }
-        .target-reward::before {
-            content: '$ ';
+        .target-stars {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            padding: 10px 0;
+        }
+        .target-stars .star {
+            font-size: 16px;
+            color: #ffd700;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
         }
         .battle-view { display: none; }
         .battle-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
@@ -204,7 +221,14 @@
         .battle-side { text-align: center; flex: 1; }
         .battle-side.enemy { padding-right: 80px; }
         .battle-side.player { padding-left: 80px; }
-        .side-icon { font-size: 80px; margin-bottom: 15px; animation: sideFloat 2s ease infinite; }
+        .side-icon { 
+            width: 80px; 
+            height: 80px; 
+            object-fit: contain;
+            margin-bottom: 15px; 
+            animation: sideFloat 2s ease infinite; 
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+        }
         @keyframes sideFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         .side-name { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
         .side-hp-bar { width: 200px; height: 20px; background: rgba(0,0,0,0.5); border-radius: 10px; margin: 0 auto 10px; overflow: hidden; border: 2px solid #555; }
@@ -241,6 +265,9 @@
         .recruited-title { font-size: 14px; color: #aaa; margin-bottom: 10px; }
         .recruited-list { display: flex; flex-wrap: wrap; gap: 8px; }
         .recruited-item { background: rgba(39,174,96,0.3); padding: 5px 12px; border-radius: 15px; font-size: 13px; border: 1px solid #27ae60; }
+        @media (max-width: 1200px) {
+            .map-grid { grid-template-columns: repeat(3, 1fr); }
+        }
         @media (max-width: 768px) {
             .map-grid { grid-template-columns: repeat(2, 1fr); }
             .battle-container { grid-template-columns: 1fr; }
@@ -253,9 +280,7 @@
         <div class="top-bar">
             <div class="game-title">⚔️ 征服者</div>
             <div class="gold-display">
-                <span style="color:#ffd700;">$</span><span id="goldAmount" style="color:#ffd700;">500</span>
-                <span style="color:#aaa;font-size:16px;margin-left:10px;">👥 <span id="population">0</span>/<span id="maxPopulation">5</span></span>
-                <button onclick="upgradePopulation()" style="margin-left:10px;padding:8px 16px;background:linear-gradient(145deg, #f39c12, #d68910);border:none;border-radius:10px;color:white;cursor:pointer;font-size:14px;font-weight:bold;box-shadow:0 3px 10px rgba(243,156,18,0.4);">+1 人口 (100 金)</button>
+                <span style="color:#ffd700;">💰</span><span id="goldAmount" style="color:#ffd700;">1000</span>
             </div>
         </div>
 
@@ -350,7 +375,7 @@
             
             <div class="battle-arena">
                 <div class="battle-side enemy">
-                    <div class="side-icon" id="enemySideIcon">🏰</div>
+                    <img class="side-icon" id="enemySideIcon" src="icons_new/border_outpost.png?v=5" alt="敌方">
                     <div class="side-name" id="enemySideName">黑暗城堡</div>
                     <div class="side-hp-bar">
                         <div class="side-hp-fill enemy" id="enemyHpBar" style="width: 100%"></div>
@@ -359,7 +384,7 @@
                 </div>
                 
                 <div class="battle-side player">
-                    <div class="side-icon">👑</div>
+                    <img class="side-icon" src="icons_new/border_outpost.png?v=5" alt="我方">
                     <div class="side-name">皇家军团</div>
                     <div class="side-hp-bar">
                         <div class="side-hp-fill player" id="playerHpBar" style="width: 100%"></div>
@@ -379,30 +404,38 @@
 
     <script>
         const gameData = {
-            gold: 500,
-            maxPopulation: 5,
+            gold: 1000,
             currentTarget: null,
             recruitedUnits: [],
             targets: [
-                { id: 1, name: '边境哨站', icon: 'https://cdn-icons-png.flaticon.com/512/263/263102.png', difficulty: 'hard', attack: 500, attackRange: 100, defense: 400, reward: 300 },
-                { id: 2, name: '强盗营地', icon: 'https://cdn-icons-png.flaticon.com/512/793/793682.png', difficulty: 'hard', attack: 280, attackRange: 150, defense: 250, reward: 500 },
-                { id: 3, name: '废弃城堡', icon: 'https://cdn-icons-png.flaticon.com/512/263/263065.png', difficulty: 'hard', attack: 320, attackRange: 200, defense: 280, reward: 700 },
-                { id: 4, name: '兽人部落', icon: 'https://cdn-icons-png.flaticon.com/512/263/263127.png', difficulty: 'hard', attack: 350, attackRange: 250, defense: 300, reward: 1000 },
-                { id: 5, name: '黑暗要塞', icon: 'https://cdn-icons-png.flaticon.com/512/263/263115.png', difficulty: 'hard', attack: 400, attackRange: 300, defense: 350, reward: 1300 },
-                { id: 6, name: '龙之巢穴', icon: 'https://cdn-icons-png.flaticon.com/512/616/616463.png', difficulty: 'hard', attack: 500, attackRange: 350, defense: 400, reward: 1600 },
-                { id: 7, name: '恶魔王座', icon: 'https://cdn-icons-png.flaticon.com/512/263/263132.png', difficulty: 'hard', attack: 600, attackRange: 400, defense: 500, reward: 1900 },
-                { id: 8, name: '虚空神殿', icon: 'https://cdn-icons-png.flaticon.com/512/263/263080.png', difficulty: 'hard', attack: 700, attackRange: 450, defense: 600, reward: 2200 }
+                { id: 1, name: '边境哨站', icon: 'icons_new/border_outpost.png?v=5', difficulty: 'easy', attack: 50, defense: 30, reward: 200 },
+                { id: 2, name: '强盗营地', icon: 'icons_new/bandit_camp.png?v=5', difficulty: 'easy', attack: 80, defense: 50, reward: 350 },
+                { id: 3, name: '废弃城堡', icon: 'icons_new/abandoned_castle.png?v=5', difficulty: 'medium', attack: 120, defense: 80, reward: 500 },
+                { id: 4, name: '兽人部落', icon: 'icons_new/orc_tribe.png?v=5', difficulty: 'medium', attack: 150, defense: 100, reward: 700 },
+                { id: 5, name: '黑暗要塞', icon: 'icons_new/dark_fortress.png?v=5', difficulty: 'hard', attack: 200, defense: 150, reward: 1000 },
+                { id: 6, name: '龙之巢穴', icon: 'icons_new/dragon_lair.png?v=5', difficulty: 'hard', attack: 300, defense: 200, reward: 1500 },
+                { id: 7, name: '恶魔王座', icon: 'icons_new/demon_throne.png?v=5', difficulty: 'hard', attack: 400, defense: 300, reward: 2000 },
+                { id: 8, name: '虚空神殿', icon: 'icons_new/void_temple.png?v=5', difficulty: 'hard', attack: 500, defense: 400, reward: 3000 }
             ],
             units: [
                 { id: 'infantry', name: '步兵', icon: '⚔️', unlocked: true, unlockCost: 0, baseCost: 50, baseAttack: 20, baseHp: 100, desc: '基础近战单位，攻守平衡' },
                 { id: 'archer', name: '弓箭手', icon: '🏹', unlocked: false, unlockCost: 200, baseCost: 80, baseAttack: 35, baseHp: 60, desc: '远程攻击单位，高攻低防' },
-                { id: 'shieldman', name: '盾兵', icon: '🛡️', unlocked: false, unlockCost: 400, baseCost: 120, baseAttack: 15, baseHp: 150, desc: '防御型单位，极高血量', requires: 'archer' },
-                { id: 'pikeman', name: '长矛兵', icon: '🔱', unlocked: false, unlockCost: 300, baseCost: 100, baseAttack: 25, baseHp: 120, desc: '重装防御单位，高血量', requires: 'shieldman' },
-                { id: 'cavalry', name: '骑兵', icon: '🐴', unlocked: false, unlockCost: 500, baseCost: 150, baseAttack: 45, baseHp: 90, desc: '高速突击单位，高攻击', requires: 'pikeman' },
-                { id: 'tank', name: '坦克', icon: '⚙️', unlocked: false, unlockCost: 600, baseCost: 200, baseAttack: 60, baseHp: 200, desc: '终极战争机器，攻守兼备', requires: 'cavalry' }
+                { id: 'pikeman', name: '长矛兵', icon: '🔱', unlocked: false, unlockCost: 300, baseCost: 100, baseAttack: 25, baseHp: 120, desc: '重装防御单位，高血量' },
+                { id: 'shieldman', name: '盾兵', icon: '🛡️', unlocked: false, unlockCost: 400, baseCost: 120, baseAttack: 15, baseHp: 150, desc: '防御型单位，极高血量' },
+                { id: 'cavalry', name: '骑兵', icon: '🐴', unlocked: false, unlockCost: 500, baseCost: 150, baseAttack: 45, baseHp: 90, desc: '高速突击单位，高攻击' },
+                { id: 'tank', name: '坦克', icon: '⚙️', unlocked: false, unlockCost: 600, baseCost: 200, baseAttack: 60, baseHp: 200, desc: '终极战争机器，攻守兼备' }
             ],
             unitLevels: {}
         };
+
+        function initGame() {
+            initUnitLevels();
+            renderMap();
+            updateGold();
+        }
+
+        // 页面加载后自动初始化游戏
+        window.addEventListener('DOMContentLoaded', initGame);
 
         function initUnitLevels() {
             gameData.units.forEach(unit => {
@@ -420,28 +453,33 @@
         }
 
         function updateGold() { document.getElementById('goldAmount').textContent = gameData.gold; }
-        function updatePopulation() { document.getElementById('population').textContent = gameData.recruitedUnits.length; document.getElementById('maxPopulation').textContent = gameData.maxPopulation; }
 
         function renderMap() {
-            document.getElementById('mapGrid').innerHTML = gameData.targets.map(t => `
-                <div class="target-card" onclick="selectTarget(${t.id})">
-                    <img class="target-icon" src="${t.icon}" alt="${t.name}" onerror="this.style.display='none';this.nextElementSibling.textContent='${t.icon}'">
-                    <div class="target-name">${t.name}</div>
-                    <span class="target-difficulty difficulty-${t.difficulty}">${t.difficulty === 'easy' ? '简单' : t.difficulty === 'medium' ? '中等' : '困难'}</span>
-                    <div class="target-reward">💰 ${t.reward}</div>
+            document.getElementById('mapGrid').innerHTML = gameData.targets.map(t => {
+                // 根据难度生成星星数量 (easy=1, medium=3, hard=5)
+                let starCount = t.difficulty === 'easy' ? 1 : t.difficulty === 'medium' ? 3 : 5;
+                let starsHTML = '⭐'.repeat(starCount);
+                
+                return `
+                <div class="target-card" onclick="selectTarget(${t.id})" style="background-image: url('${t.icon}')">
+                    <div class="target-header">
+                        <div class="target-name">${t.name}</div>
+                        <div class="target-reward">💰${t.reward}</div>
+                    </div>
+                    <div class="target-stars">
+                        ${starsHTML.split('').map(s => `<span class="star">${s}</span>`).join('')}
+                    </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function selectTarget(targetId) {
             gameData.currentTarget = gameData.targets.find(t => t.id === targetId);
             gameData.recruitedUnits = [];
-            document.getElementById('enemyAvatar').textContent = gameData.currentTarget.icon;
+            document.getElementById('enemyAvatar').textContent = '🏰';
             document.getElementById('enemyName').textContent = gameData.currentTarget.name;
-            // 显示攻击力范围
-            const minAttack = Math.max(1, gameData.currentTarget.attack - gameData.currentTarget.attackRange);
-            const maxAttack = gameData.currentTarget.attack + gameData.currentTarget.attackRange;
-            document.getElementById('enemyAttack').textContent = `${minAttack}-${maxAttack}`;
+            document.getElementById('enemyAttack').textContent = gameData.currentTarget.attack;
             document.getElementById('enemyDefense').textContent = gameData.currentTarget.defense;
             updatePlayerStats();
             renderUnits();
@@ -454,7 +492,6 @@
             document.getElementById('mapView').style.display = 'block';
             gameData.currentTarget = null;
             gameData.recruitedUnits = [];
-            updatePopulation();
         }
 
         function renderUnits() {
@@ -480,30 +517,15 @@
         }
 
         function recruitUnit(unitId) {
-            if (gameData.recruitedUnits.length >= gameData.maxPopulation) { alert(`⚠️ 人口已达上限！当前上限 ${gameData.maxPopulation}，可升级人口上限或返回减少兵力。`); return; }
             const unit = gameData.units.find(u => u.id === unitId);
             const stats = getUnitStats(unitId);
             if (gameData.gold >= stats.cost) {
                 gameData.gold -= stats.cost;
                 gameData.recruitedUnits.push({ id: unitId, name: unit.name, icon: unit.icon, attack: stats.attack, hp: stats.hp });
                 updateGold();
-                updatePopulation();
                 updatePlayerStats();
                 renderUnits();
                 updateRecruitedList();
-            }
-        }
-
-        function upgradePopulation() {
-            const upgradeCost = 100;
-            if (gameData.gold >= upgradeCost) {
-                gameData.gold -= upgradeCost;
-                gameData.maxPopulation += 1;
-                updateGold();
-                updatePopulation();
-                alert(`✅ 人口上限 +1！当前上限：${gameData.maxPopulation}`);
-            } else {
-                alert(`⚠️ 金币不足！升级人口上限需要 ${upgradeCost} 金币。`);
             }
         }
 
@@ -538,19 +560,12 @@
 
         function showUnlockModal() {
             document.getElementById('unlockGrid').innerHTML = gameData.units.map(unit => {
-                const prerequisiteUnlocked = !unit.requires || gameData.units.find(u => u.id === unit.requires)?.unlocked;
-                const canUnlock = !unit.unlocked && prerequisiteUnlocked && gameData.gold >= unit.unlockCost;
-                const lockedByPrereq = !unit.unlocked && !prerequisiteUnlocked;
+                const canUnlock = !unit.unlocked && gameData.gold >= unit.unlockCost;
                 
                 let statusText = unit.unlocked ? '✅ 已解锁' : `💰 ${unit.unlockCost}`;
-                let buttonText = canUnlock ? '解锁' : (lockedByPrereq ? '需先解锁前置兵种' : '金币不足');
+                let buttonText = canUnlock ? '解锁' : '金币不足';
                 let buttonClass = canUnlock ? 'can-unlock' : 'locked';
                 let buttonDisabled = !canUnlock ? 'disabled' : '';
-                
-                if (lockedByPrereq) {
-                    const prereqUnit = gameData.units.find(u => u.id === unit.requires);
-                    statusText = `🔒 需先解锁 ${prereqUnit?.name || '前置兵种'}`;
-                }
                 
                 return `
                     <div class="unlock-card ${unit.unlocked ? 'unlocked' : canUnlock ? 'can-unlock' : 'locked'}">
@@ -569,17 +584,13 @@
 
         function unlockUnit(unitId) {
             const unit = gameData.units.find(u => u.id === unitId);
-            const prerequisiteUnlocked = !unit.requires || gameData.units.find(u => u.id === unit.requires)?.unlocked;
             
-            if (!unit.unlocked && prerequisiteUnlocked && gameData.gold >= unit.unlockCost) {
+            if (!unit.unlocked && gameData.gold >= unit.unlockCost) {
                 gameData.gold -= unit.unlockCost;
                 unit.unlocked = true;
                 updateGold();
                 renderUnits();
                 showUnlockModal();
-            } else if (!prerequisiteUnlocked) {
-                const prereqUnit = gameData.units.find(u => u.id === unit.requires);
-                alert(`⚠️ 需要先解锁 ${prereqUnit?.name || '前置兵种'} 才能解锁 ${unit.name}！`);
             }
         }
 
@@ -607,9 +618,9 @@
         function showBattleProcess() {
             const totalAttack = gameData.recruitedUnits.reduce((sum, u) => sum + u.attack, 0);
             const totalDefense = gameData.recruitedUnits.reduce((sum, u) => sum + u.hp, 0);
-            // 随机攻击力：基础攻击 ± 随机范围
-            const enemyRandomOffset = Math.floor(Math.random() * gameData.currentTarget.attackRange * 2) - gameData.currentTarget.attackRange;
-            const enemyAttack = Math.max(1, gameData.currentTarget.attack + enemyRandomOffset);
+            // 随机攻击力：基础攻击 ±20%
+            const enemyRandomFactor = 0.8 + Math.random() * 0.4; // 0.8 ~ 1.2
+            const enemyAttack = Math.max(1, Math.floor(gameData.currentTarget.attack * enemyRandomFactor));
             // 随机防御力：基础防御 ±15%
             const enemyDefenseRandomFactor = 0.85 + Math.random() * 0.3; // 0.85 ~ 1.15
             const enemyDefense = Math.max(1, Math.floor(gameData.currentTarget.defense * enemyDefenseRandomFactor));
@@ -635,7 +646,7 @@
             };
             
             // 初始化界面
-            document.getElementById('enemySideIcon').textContent = battleProcessData.enemyIcon;
+            document.getElementById('enemySideIcon').src = battleProcessData.enemyIcon;
             document.getElementById('enemySideName').textContent = battleProcessData.enemyName;
             document.getElementById('enemyHpText').textContent = `${battleProcessData.enemyHp} / ${battleProcessData.enemyMaxHp}`;
             document.getElementById('playerHpText').textContent = `${battleProcessData.playerHp} / ${battleProcessData.playerMaxHp}`;
@@ -788,7 +799,6 @@
                 
                 updateGold();
                 gameData.recruitedUnits = [];
-                updatePopulation();
                 updatePlayerStats();
                 updateRecruitedList();
                 renderUnits();
@@ -870,9 +880,10 @@
             document.getElementById('battleResultModal').classList.remove('active');
         }
 
-        initUnitLevels();
-        renderMap();
-        updatePopulation();
+        // 游戏启动时不自动初始化，等待用户点击开始游戏按钮
+        // initUnitLevels();
+        // renderMap();
+        // updatePopulation();
     </script>
 </body>
 </html>
