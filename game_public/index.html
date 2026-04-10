@@ -199,8 +199,8 @@
             padding: 25px; 
             max-width: 600px; 
             width: 90%; 
-            max-height: min(85vh, 700px); /* 限制最大高度 */
-            overflow-y: auto;
+            max-height: 85vh; /* 限制最大高度 */
+            overflow-y: visible; /* 不滚动，让 battle-log 自己滚动 */
             border: 3px solid; 
             box-shadow: 0 25px 80px rgba(0,0,0,0.8); 
             /* 移除 slideIn 动画，使用淡入效果替代 */ 
@@ -231,11 +231,10 @@
             border-radius: 12px; 
             padding: 15px; 
             max-height: 150px; 
-            overflow-y: visible; /* 临时改为 visible，排查闪动问题 */ 
+            overflow-y: auto; /* 战斗日志区域滚动 */
             overflow-x: hidden;
             margin: 15px 0; 
             border: 1px solid #555;
-            scroll-behavior: smooth;
         }
         /* 战斗日志滚动条样式 */
         .battle-log::-webkit-scrollbar { width: 4px; }
