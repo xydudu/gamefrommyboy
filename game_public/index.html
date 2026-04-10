@@ -252,7 +252,17 @@
         .side-hp-fill.enemy { background: linear-gradient(90deg, #e74c3c, #c0392b); }
         .side-hp-fill.player { background: linear-gradient(90deg, #27ae60, #2ecc71); }
         .side-hp-text { font-size: 14px; color: #aaa; }
-        .battle-actions { background: rgba(0,0,0,0.4); border-radius: 15px; padding: 20px; height: 200px; overflow-y: auto; border: 2px solid #3498db; margin-bottom: 20px; }
+        .battle-actions { 
+            background: rgba(0,0,0,0.4); 
+            border-radius: 15px; 
+            padding: 20px; 
+            height: 200px; 
+            overflow-y: auto; 
+            overflow-x: hidden; /* 防止横向滚动 */
+            border: 2px solid #3498db; 
+            margin-bottom: 20px;
+            scroll-behavior: smooth; /* 平滑滚动 */
+        }
         .battle-actions-title { text-align: center; font-size: 16px; color: #3498db; margin-bottom: 15px; font-weight: bold; }
         .action-entry { display: flex; align-items: center; padding: 10px; margin-bottom: 8px; border-radius: 8px; animation: actionSlide 0.3s ease; }
         @keyframes actionSlide { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -1300,6 +1310,11 @@
             
             // 延迟一下显示结果
             setTimeout(() => {
+                // 清空战斗日志容器，防止滚动事件影响结果弹窗
+                const actionsContainer = document.getElementById('battleActions');
+                actionsContainer.innerHTML = '<div class="battle-actions-title">📜 战斗日志</div>';
+                actionsContainer.scrollTop = 0;
+                
                 document.getElementById('battleProcessModal').classList.remove('active');
                 
                 // 计算统计数据
