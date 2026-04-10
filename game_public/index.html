@@ -231,7 +231,7 @@
             border-radius: 12px; 
             padding: 15px; 
             max-height: 150px; 
-            overflow-y: auto; 
+            overflow-y: visible; /* 临时改为 visible，排查闪动问题 */ 
             overflow-x: hidden;
             margin: 15px 0; 
             border: 1px solid #555;
@@ -1250,7 +1250,7 @@
                     eventLog.style.borderLeft = '4px solid #f39c12';
                     eventLog.innerHTML = `<span class="action-icon">${e.icon}</span><span class="action-text">⚡ ${e.name}：${e.desc}</span>`;
                     actionsContainer.appendChild(eventLog);
-                    actionsContainer.scrollTop = actionsContainer.scrollHeight;
+                    // actionsContainer.scrollTop = actionsContainer.scrollHeight; // 临时注释，排查闪动问题
                 });
             }
             
@@ -1270,7 +1270,7 @@
                 <span class="action-damage player ${isPlayerCrit ? 'critical' : ''}">-${actualPlayerDamage}</span>
             `;
             actionsContainer.appendChild(playerAction);
-            actionsContainer.scrollTop = actionsContainer.scrollHeight;
+            // actionsContainer.scrollTop = actionsContainer.scrollHeight; // 临时注释，排查闪动问题
             
             // 更新敌方血条
             updateHpBar('enemy', data.enemyHp, data.enemyMaxHp);
@@ -1299,7 +1299,7 @@
                     <span class="action-damage enemy ${isEnemyCrit ? 'critical' : ''}">-${actualEnemyDamage}</span>
                 `;
                 actionsContainer.appendChild(enemyAction);
-                actionsContainer.scrollTop = actionsContainer.scrollHeight;
+                // actionsContainer.scrollTop = actionsContainer.scrollHeight; // 临时注释，排查闪动问题
                 
                 // 更新我方血条
                 updateHpBar('player', data.playerHp, data.playerMaxHp);
@@ -1342,7 +1342,7 @@
                 // 清空战斗日志容器，防止滚动事件影响结果弹窗
                 const actionsContainer = document.getElementById('battleActions');
                 actionsContainer.innerHTML = '<div class="battle-actions-title">📜 战斗日志</div>';
-                actionsContainer.scrollTop = 0;
+                // actionsContainer.scrollTop = 0; // 临时注释，排查闪动问题
                 
                 document.getElementById('battleProcessModal').classList.remove('active');
                 
