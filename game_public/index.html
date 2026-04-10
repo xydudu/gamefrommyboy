@@ -177,8 +177,22 @@
         .btn-unlock-unit.can-unlock { background: #f39c12; color: white; }
         .btn-close-modal { display: block; width: 200px; margin: 0 auto; padding: 12px; background: #e94560; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
         /* 战斗结果弹窗 */
-        .battle-result-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .battle-result-overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.85); 
+            z-index: 2000; 
+            justify-content: center; 
+            align-items: center; 
+            backdrop-filter: blur(5px); 
+        }
         .battle-result-overlay.active { display: flex; }
+        /* 弹窗显示时禁用 body 滚动，防止闪动 */
+        body.modal-open { overflow: hidden; }
         .battle-result-content { 
             background: linear-gradient(145deg, #1a1a2e, #16213e); 
             border-radius: 25px; 
@@ -1411,7 +1425,7 @@
             const logContainer = document.getElementById('battleLogContent');
             const button = document.getElementById('resultButton');
             
-            // 设置样式
+            // 先设置样式和内容（在显示前完成）
             content.className = `battle-result-content ${data.victory ? 'victory' : 'defeat'}`;
             title.className = `result-title ${data.victory ? 'victory' : 'defeat'}`;
             button.className = `btn-result ${data.victory ? 'victory' : 'defeat'}`;
@@ -1448,11 +1462,16 @@
                 </div>
             `).join('');
             
+            // 所有内容生成完毕后再显示弹窗，并禁用 body 滚动
+            document.body.classList.add('modal-open');
             modal.classList.add('active');
         }
 
         function closeBattleResult() {
-            document.getElementById('battleResultModal').classList.remove('active');
+            const modal = document.getElementById('battleResultModal');
+            modal.classList.remove('active');
+            // 恢复 body 滚动
+            document.body.classList.remove('modal-open');
         }
 
         // 继续当前征战（返回地图，不重置难度）
