@@ -1601,9 +1601,6 @@
             // 清空当前兵种，让玩家重新招募（增加挑战性）
             gameData.recruitedUnits = [];
             
-            // 返回地图
-            backToMap();
-            
             // 显示挑战模式提示弹窗
             showChallengeModal();
         }
@@ -1623,11 +1620,21 @@
             modal.classList.add('active');
         }
 
-        // 关闭挑战模式弹窗
+        // 关闭挑战模式弹窗并进入下一场战斗
         function closeChallengeModal() {
             const modal = document.getElementById('challengeModal');
             modal.classList.remove('active');
             document.body.classList.remove('modal-open');
+            
+            // 自动选择下一个难度的敌人
+            const nextTargetIndex = Math.min(
+                gameData.targets.length - 1,
+                Math.floor(gameData.victoryCount / 2)
+            );
+            const nextTarget = gameData.targets[nextTargetIndex];
+            
+            // 直接进入战斗准备界面
+            selectTarget(nextTarget.id);
         }
 
         // 游戏启动时不自动初始化，等待用户点击开始游戏按钮
