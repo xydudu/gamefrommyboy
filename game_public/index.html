@@ -199,11 +199,11 @@
             padding: 25px; 
             max-width: 600px; 
             width: 90%; 
-            /* max-height: 85vh; */ /* 临时禁用，排查闪动问题 */
-            overflow-y: visible; /* 临时禁用，排查闪动问题 */
+            max-height: min(85vh, 700px); /* 限制最大高度 */
+            overflow-y: auto;
             border: 3px solid; 
             box-shadow: 0 25px 80px rgba(0,0,0,0.8); 
-            /* animation: slideIn 0.4s ease; */ /* 临时禁用，排查闪动问题 */ 
+            /* 移除 slideIn 动画，使用淡入效果替代 */ 
         }
         /* 滚动条样式 */
         .battle-result-content::-webkit-scrollbar { width: 6px; }
@@ -1250,7 +1250,7 @@
                     eventLog.style.borderLeft = '4px solid #f39c12';
                     eventLog.innerHTML = `<span class="action-icon">${e.icon}</span><span class="action-text">⚡ ${e.name}：${e.desc}</span>`;
                     actionsContainer.appendChild(eventLog);
-                    // actionsContainer.scrollTop = actionsContainer.scrollHeight; // 临时注释，排查闪动问题
+                    actionsContainer.scrollTop = actionsContainer.scrollHeight;
                 });
             }
             
@@ -1270,7 +1270,7 @@
                 <span class="action-damage player ${isPlayerCrit ? 'critical' : ''}">-${actualPlayerDamage}</span>
             `;
             actionsContainer.appendChild(playerAction);
-            // actionsContainer.scrollTop = actionsContainer.scrollHeight; // 临时注释，排查闪动问题
+            actionsContainer.scrollTop = actionsContainer.scrollHeight;
             
             // 更新敌方血条
             updateHpBar('enemy', data.enemyHp, data.enemyMaxHp);
@@ -1299,7 +1299,7 @@
                     <span class="action-damage enemy ${isEnemyCrit ? 'critical' : ''}">-${actualEnemyDamage}</span>
                 `;
                 actionsContainer.appendChild(enemyAction);
-                // actionsContainer.scrollTop = actionsContainer.scrollHeight; // 临时注释，排查闪动问题
+                actionsContainer.scrollTop = actionsContainer.scrollHeight;
                 
                 // 更新我方血条
                 updateHpBar('player', data.playerHp, data.playerMaxHp);
@@ -1342,7 +1342,7 @@
                 // 清空战斗日志容器，防止滚动事件影响结果弹窗
                 const actionsContainer = document.getElementById('battleActions');
                 actionsContainer.innerHTML = '<div class="battle-actions-title">📜 战斗日志</div>';
-                // actionsContainer.scrollTop = 0; // 临时注释，排查闪动问题
+                actionsContainer.scrollTop = 0;
                 
                 document.getElementById('battleProcessModal').classList.remove('active');
                 
@@ -1441,21 +1441,17 @@
             const button = document.getElementById('resultButton');
             const victoryButtons = document.getElementById('victoryButtons');
             
-            // 1. 先隐藏弹窗，避免内容变化被看到
-            modal.style.opacity = '0';
-            modal.style.pointerEvents = 'none';
-            
-            // 2. 设置样式
+            // 1. 设置样式
             content.className = `battle-result-content ${data.victory ? 'victory' : 'defeat'}`;
             title.className = `result-title ${data.victory ? 'victory' : 'defeat'}`;
             button.className = `btn-result ${data.victory ? 'victory' : 'defeat'}`;
             
-            // 3. 设置内容
+            // 2. 设置内容
             icon.textContent = data.icon;
             title.textContent = data.title;
             subtitle.textContent = data.subtitle;
             
-            // 4. 设置按钮显示
+            // 3. 设置按钮显示
             if (data.victory) {
                 victoryButtons.style.display = 'block';
                 button.style.display = 'none';
@@ -1465,7 +1461,7 @@
                 button.textContent = '重整旗鼓';
             }
             
-            // 5. 生成统计和日志
+            // 4. 生成统计和日志
             statsContainer.innerHTML = data.stats.map(stat => `
                 <div class="battle-stat-box">
                     <div class="battle-stat-label">${stat.label}</div>
@@ -1480,28 +1476,16 @@
                 </div>
             `).join('');
             
-            // 6. 强制浏览器重排，确保内容已渲染
-            void content.offsetHeight;
-            
-            // 7. 禁用 body 滚动并显示弹窗（淡入效果）
+            // 5. 禁用 body 滚动并显示弹窗
             document.body.classList.add('modal-open');
-            modal.style.opacity = '1';
-            modal.style.transition = 'opacity 0.2s ease';
-            modal.style.pointerEvents = 'auto';
             modal.classList.add('active');
         }
 
         function closeBattleResult() {
             const modal = document.getElementById('battleResultModal');
-            // 淡出效果
-            modal.style.opacity = '0';
-            setTimeout(() => {
-                modal.classList.remove('active');
-                modal.style.opacity = '';
-                modal.style.pointerEvents = '';
-                // 恢复 body 滚动
-                document.body.classList.remove('modal-open');
-            }, 200);
+            modal.classList.remove('active');
+            // 恢复 body 滚动
+            document.body.classList.remove('modal-open');
         }
 
         // 继续当前征战（返回地图，不重置难度）
