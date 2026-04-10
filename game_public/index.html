@@ -455,6 +455,10 @@
                     <!-- 动态生成 -->
                 </div>
             </div>
+            <div id="victoryButtons" style="display: none;">
+                <button class="btn-result victory" onclick="continueCurrentBattle()">⚔️ 继续当前征战</button>
+                <button class="btn-result" style="background: linear-gradient(145deg, #9b59b6, #8e44ad); margin-top: 10px;" onclick="challengeNextDifficulty()">🔥 挑战下一难度</button>
+            </div>
             <button class="btn-result" id="resultButton" onclick="closeBattleResult()">继续征战</button>
         </div>
     </div>
@@ -1385,7 +1389,17 @@
             icon.textContent = data.icon;
             title.textContent = data.title;
             subtitle.textContent = data.subtitle;
-            button.textContent = data.victory ? '继续征战' : '重整旗鼓';
+            
+            // 胜利时显示选择按钮，失败时显示单个按钮
+            const victoryButtons = document.getElementById('victoryButtons');
+            if (data.victory) {
+                victoryButtons.style.display = 'block';
+                button.style.display = 'none';
+            } else {
+                victoryButtons.style.display = 'none';
+                button.style.display = 'block';
+                button.textContent = '重整旗鼓';
+            }
             
             // 生成统计
             statsContainer.innerHTML = data.stats.map(stat => `
@@ -1408,6 +1422,30 @@
 
         function closeBattleResult() {
             document.getElementById('battleResultModal').classList.remove('active');
+        }
+
+        // 继续当前征战（返回地图，不重置难度）
+        function continueCurrentBattle() {
+            closeBattleResult();
+            backToMap(); // 返回地图，重置连战疲劳
+        }
+
+        // 挑战下一难度（增加难度倍率，进入下一场战斗）
+        function challengeNextDifficulty() {
+            closeBattleResult();
+            
+            // 额外增加难度（挑战下一难度的意思）
+            gameData.victoryCount += 2; // 额外 +2 场胜利计数，难度提升更快
+            calculateDifficultyScale(); // 重新计算难度
+            
+            // 清空当前兵种，让玩家重新招募（增加挑战性）
+            gameData.recruitedUnits = [];
+            
+            // 返回地图
+            backToMap();
+            
+            // 提示玩家
+            alert(`🔥 挑战模式开启！\n\n难度提升至：${(gameData.difficultyScale * 100).toFixed(0)}%\n\n请重新招募兵种，准备迎接更强的敌人！`);
         }
 
         // 游戏启动时不自动初始化，等待用户点击开始游戏按钮
