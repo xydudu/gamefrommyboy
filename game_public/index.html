@@ -226,7 +226,22 @@
         .battle-stat-value { font-size: 20px; font-weight: bold; color: #fff; }
         .battle-stat-value.damage { color: #e74c3c; }
         .battle-stat-value.gold { color: #ffd700; }
-        .battle-log { background: rgba(0,0,0,0.3); border-radius: 12px; padding: 15px; max-height: 150px; overflow-y: auto; margin: 15px 0; border: 1px solid #555; }
+        .battle-log { 
+            background: rgba(0,0,0,0.3); 
+            border-radius: 12px; 
+            padding: 15px; 
+            max-height: 150px; 
+            overflow-y: auto; 
+            overflow-x: hidden;
+            margin: 15px 0; 
+            border: 1px solid #555;
+            scroll-behavior: smooth;
+        }
+        /* 战斗日志滚动条样式 */
+        .battle-log::-webkit-scrollbar { width: 4px; }
+        .battle-log::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 2px; }
+        .battle-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .battle-log::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
         .battle-log-title { font-size: 13px; color: #aaa; margin-bottom: 10px; text-align: center; }
         .log-entry { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 12px; display: flex; align-items: center; gap: 8px; }
         .log-entry:last-child { border-bottom: none; }
@@ -1424,19 +1439,23 @@
             const statsContainer = document.getElementById('battleStats');
             const logContainer = document.getElementById('battleLogContent');
             const button = document.getElementById('resultButton');
+            const victoryButtons = document.getElementById('victoryButtons');
             
-            // 先设置样式和内容（在显示前完成）
+            // 1. 先隐藏弹窗，避免内容变化被看到
+            modal.style.opacity = '0';
+            modal.style.pointerEvents = 'none';
+            
+            // 2. 设置样式
             content.className = `battle-result-content ${data.victory ? 'victory' : 'defeat'}`;
             title.className = `result-title ${data.victory ? 'victory' : 'defeat'}`;
             button.className = `btn-result ${data.victory ? 'victory' : 'defeat'}`;
             
-            // 设置内容
+            // 3. 设置内容
             icon.textContent = data.icon;
             title.textContent = data.title;
             subtitle.textContent = data.subtitle;
             
-            // 胜利时显示选择按钮，失败时显示单个按钮
-            const victoryButtons = document.getElementById('victoryButtons');
+            // 4. 设置按钮显示
             if (data.victory) {
                 victoryButtons.style.display = 'block';
                 button.style.display = 'none';
@@ -1446,7 +1465,7 @@
                 button.textContent = '重整旗鼓';
             }
             
-            // 生成统计
+            // 5. 生成统计和日志
             statsContainer.innerHTML = data.stats.map(stat => `
                 <div class="battle-stat-box">
                     <div class="battle-stat-label">${stat.label}</div>
@@ -1454,7 +1473,6 @@
                 </div>
             `).join('');
             
-            // 生成日志
             logContainer.innerHTML = data.logs.map(log => `
                 <div class="log-entry ${log.type}">
                     <span>${log.text}</span>
@@ -1462,16 +1480,28 @@
                 </div>
             `).join('');
             
-            // 所有内容生成完毕后再显示弹窗，并禁用 body 滚动
+            // 6. 强制浏览器重排，确保内容已渲染
+            void content.offsetHeight;
+            
+            // 7. 禁用 body 滚动并显示弹窗（淡入效果）
             document.body.classList.add('modal-open');
+            modal.style.opacity = '1';
+            modal.style.transition = 'opacity 0.2s ease';
+            modal.style.pointerEvents = 'auto';
             modal.classList.add('active');
         }
 
         function closeBattleResult() {
             const modal = document.getElementById('battleResultModal');
-            modal.classList.remove('active');
-            // 恢复 body 滚动
-            document.body.classList.remove('modal-open');
+            // 淡出效果
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.classList.remove('active');
+                modal.style.opacity = '';
+                modal.style.pointerEvents = '';
+                // 恢复 body 滚动
+                document.body.classList.remove('modal-open');
+            }, 200);
         }
 
         // 继续当前征战（返回地图，不重置难度）
