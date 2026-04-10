@@ -258,6 +258,88 @@
         .damage-popup.player { color: #3498db; text-shadow: 0 0 20px rgba(52,152,219,0.8); }
         .damage-popup.enemy { color: #e74c3c; text-shadow: 0 0 20px rgba(231,76,60,0.8); }
         .damage-popup.critical { color: #f39c12; font-size: 48px; text-shadow: 0 0 30px rgba(243,156,18,1); }
+        
+        /* 随机事件样式 */
+        .event-notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(145deg, #2c3e50, #34495e);
+            border: 3px solid #f39c12;
+            border-radius: 15px;
+            padding: 20px 40px;
+            z-index: 4000;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(243,156,18,0.5);
+            animation: slideDown 0.5s ease;
+        }
+        @keyframes slideDown { from { top: -100px; opacity: 0; } to { top: 20px; opacity: 1; } }
+        .event-icon { font-size: 48px; margin-bottom: 10px; }
+        .event-name { font-size: 22px; font-weight: bold; color: #f39c12; margin-bottom: 8px; }
+        .event-desc { font-size: 14px; color: #ccc; margin-bottom: 5px; }
+        .event-duration { font-size: 12px; color: #888; }
+        
+        .active-events {
+            background: rgba(243,156,18,0.1);
+            border: 2px solid #f39c12;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        /* 难度系统样式 */
+        .difficulty-info {
+            background: rgba(231,76,60,0.1);
+            border: 2px solid #e74c3c;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .difficulty-info-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+        .difficulty-stat {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.3);
+            padding: 8px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .difficulty-stat:last-child { margin-bottom: 0; }
+        .stat-value { color: #f39c12; font-weight: bold; }
+        .stat-warning { color: #e74c3c; font-weight: bold; }
+        .stat-good { color: #27ae60; font-weight: bold; }
+        
+        .counter-info {
+            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin: 3px 0;
+        }
+        .counter-advantage { background: rgba(39,174,96,0.2); color: #27ae60; }
+        .counter-disadvantage { background: rgba(231,76,60,0.2); color: #e74c3c; }
+        .active-events-title { font-size: 16px; font-weight: bold; color: #f39c12; margin-bottom: 10px; }
+        .active-event-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.3);
+            padding: 8px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .active-event-item:last-child { margin-bottom: 0; }
+        .event-buff { color: #2ecc71; }
+        .event-debuff { color: #e74c3c; }
+        .event-turns { color: #f39c12; font-weight: bold; }
+        
         .action-bar { display: flex; justify-content: space-between; gap: 15px; }
         .btn-back { background: linear-gradient(145deg, #7f8c8d, #95a5a6); color: white; padding: 15px 30px; font-size: 16px; border: none; border-radius: 10px; cursor: pointer; }
         .btn-battle { background: linear-gradient(145deg, #e94560, #ff6b6b); color: white; padding: 15px 50px; font-size: 20px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; }
@@ -291,6 +373,18 @@
         </div>
 
         <div class="battle-view" id="battleView">
+            <!-- 难度信息显示区域 -->
+            <div class="difficulty-info" id="difficultyInfo">
+                <div class="difficulty-info-title">📊 战场态势</div>
+                <div id="difficultyStats"></div>
+            </div>
+            
+            <!-- 随机事件显示区域 -->
+            <div class="active-events" id="activeEvents" style="display: none;">
+                <div class="active-events-title">⚡ 当前生效事件</div>
+                <div id="activeEventsList"></div>
+            </div>
+            
             <div class="battle-container">
                 <div class="battle-panel">
                     <div class="panel-title">🏴 敌方势力</div>
@@ -365,6 +459,14 @@
         </div>
     </div>
 
+    <!-- 随机事件通知弹窗 -->
+    <div class="event-notification" id="eventNotification" style="display: none;">
+        <div class="event-icon" id="eventIcon">⛈️</div>
+        <div class="event-name" id="eventName">暴雨</div>
+        <div class="event-desc" id="eventDesc">骑兵移动力 -50%，火攻无效</div>
+        <div class="event-duration" id="eventDuration">持续：2 回合</div>
+    </div>
+
     <!-- 战斗过程动画界面 -->
     <div class="battle-process-overlay" id="battleProcessModal">
         <div class="battle-process-container">
@@ -403,10 +505,62 @@
     </div>
 
     <script>
+        // 随机事件池
+        const randomEvents = [
+            // 天气类
+            { id: 'sandstorm', name: '沙尘暴', icon: '🌪️', type: 'weather', effect: { ranged: -0.3 }, desc: '远程兵种命中率 -30%', duration: 3, chance: 15 },
+            { id: 'rain', name: '暴雨', icon: '🌧️', type: 'weather', effect: { cavalry: { speed: -0.5 }, fire: 0 }, desc: '骑兵移动力 -50%，火攻无效', duration: 2, chance: 12 },
+            { id: 'fog', name: '大雾', icon: '🌫️', type: 'weather', effect: { vision: -0.4, ambush: 0.5 }, desc: '双方视野 -40%，伏击成功率 +50%', duration: 2, chance: 10 },
+            { id: 'scorching', name: '烈日', icon: '☀️', type: 'weather', effect: { heavy: { stamina: -0.3 } }, desc: '重甲单位体力消耗 +30%', duration: 3, chance: 15 },
+            
+            // 兵种变异类
+            { id: 'berserk', name: '狂暴化', icon: '😤', type: 'buff', effect: { melee: { attack: 0.25, defense: -0.15 } }, desc: '近战兵种攻击 +25%，防御 -15%', duration: 2, chance: 8 },
+            { id: 'ironwall', name: '铁壁觉醒', icon: '🛡️', type: 'buff', effect: { infantry: { defense: 0.3, speed: -0.2 } }, desc: '步兵防御 +30%，速度 -20%', duration: 2, chance: 8 },
+            { id: 'windrush', name: '疾风突进', icon: '💨', type: 'buff', effect: { cavalry: { speed: 0.4, crit: 1 } }, desc: '骑兵速度 +40%，下回合必暴击', duration: 1, chance: 6 },
+            { id: 'precise', name: '精准射击', icon: '🎯', type: 'buff', effect: { archer: { range: 2, accuracy: 0.2 } }, desc: '弓箭手射程 +2，命中率 +20%', duration: 2, chance: 8 },
+            
+            // 地形类
+            { id: 'collapse', name: '地面塌陷', icon: '🕳️', type: 'terrain', effect: { impassable: true }, desc: '随机区域不可通行', duration: 999, chance: 5 },
+            { id: 'swamp', name: '沼泽涌现', icon: '🌿', type: 'terrain', effect: { immobilize: true }, desc: '移动到此区域的单位下回合无法行动', duration: 2, chance: 7 },
+            { id: 'highland', name: '高地优势', icon: '⛰️', type: 'terrain', effect: { highground: { attack: 0.15, defense: 0.1 } }, desc: '占据高地区域的兵种攻击 +15%，防御 +10%', duration: 3, chance: 10 },
+            
+            // 士气类
+            { id: 'morale_low', name: '军心涣散', icon: '😞', type: 'debuff', effect: { all: { attack: -0.1, defense: -0.1 } }, desc: '所有单位攻击 -10%，防御 -10%', duration: 2, chance: 10 },
+            { id: 'laststand', name: '背水一战', icon: '🔥', type: 'buff', effect: { lowhp: { attack: 0.4 } }, desc: '生命值低于 30% 的单位攻击 +40%', duration: 1, chance: 7 },
+            { id: 'inspire', name: '将帅鼓舞', icon: '📣', type: 'buff', effect: { firststrike: true, crit: 0.15 }, desc: '下回合必定先手，暴击率 +15%', duration: 1, chance: 8 },
+            
+            // 装备/补给类
+            { id: 'weapon_break', name: '武器断裂', icon: '💔', type: 'debuff', effect: { all: { attack: -0.2 } }, desc: '攻击 -20%', duration: 2, chance: 6 },
+            { id: 'supply', name: '补给到达', icon: '📦', type: 'buff', effect: { regen: 0.05 }, desc: '每回合恢复 5% 生命值', duration: 3, chance: 8 },
+            { id: 'ammo', name: '弹药充足', icon: '🏹', type: 'buff', effect: { ranged: { extraAttack: 1 } }, desc: '远程兵种可多攻击 1 次/回合', duration: 2, chance: 5 },
+            
+            // 传奇事件
+            { id: 'meteor', name: '流星坠落', icon: '☄️', type: 'legendary', effect: { damage: 0.3 }, desc: '随机区域造成 30% 最大生命值伤害', duration: 1, chance: 2 },
+            { id: 'beast', name: '神兽降临', icon: '🐲', type: 'legendary', effect: { summon: true }, desc: '召唤中立神兽，无差别攻击双方', duration: 2, chance: 1 },
+            { id: 'timewarp', name: '时空扭曲', icon: '🌀', type: 'legendary', effect: { rewind: 2 }, desc: '双方单位回到 2 回合前的位置', duration: 1, chance: 1 }
+        ];
+
         const gameData = {
             gold: 1000,
             currentTarget: null,
             recruitedUnits: [],
+            activeEvents: [],
+            eventHistory: [],
+            battleTurn: 0,
+            // ========== 难度系统 ==========
+            victoryCount: 0,          // 胜利次数
+            consecutiveBattles: 0,    // 连战次数
+            difficultyScale: 1.0,     // 难度倍率
+            unitCasualties: [],       // 本战损耗记录
+            // ========== 兵种克制配置 ==========
+            unitCounters: {
+                infantry: { strong: ['cavalry'], weak: ['archer'] },
+                archer: { strong: ['infantry'], weak: ['cavalry'] },
+                cavalry: { strong: ['archer'], weak: ['infantry'] },
+                pikeman: { strong: ['cavalry'], weak: ['archer'], bonusVs: ['cavalry'] },
+                shieldman: { strong: ['archer'], weak: ['infantry'], resistVs: ['archer'] },
+                tank: { strong: [], weak: [], immune: true } // 坦克不受克制影响
+            },
             targets: [
                 { id: 1, name: '边境哨站', icon: 'icons_new/border_outpost.png?v=5', difficulty: 'easy', attack: 50, defense: 30, reward: 200 },
                 { id: 2, name: '强盗营地', icon: 'icons_new/bandit_camp.png?v=5', difficulty: 'easy', attack: 80, defense: 50, reward: 350 },
@@ -477,14 +631,25 @@
         function selectTarget(targetId) {
             gameData.currentTarget = gameData.targets.find(t => t.id === targetId);
             gameData.recruitedUnits = [];
+            gameData.activeEvents = [];
+            gameData.battleTurn = 0;
+            gameData.unitCasualties = [];
+            
+            // 计算应用难度后的敌人属性
+            const difficultyScale = calculateDifficultyScale();
+            const scaledEnemyAttack = Math.floor(gameData.currentTarget.attack * difficultyScale);
+            const scaledEnemyDefense = Math.floor(gameData.currentTarget.defense * difficultyScale);
+            
             document.getElementById('enemyAvatar').textContent = '🏰';
             document.getElementById('enemyName').textContent = gameData.currentTarget.name;
-            document.getElementById('enemyAttack').textContent = gameData.currentTarget.attack;
-            document.getElementById('enemyDefense').textContent = gameData.currentTarget.defense;
+            document.getElementById('enemyAttack').textContent = scaledEnemyAttack;
+            document.getElementById('enemyDefense').textContent = scaledEnemyDefense;
             updatePlayerStats();
             renderUnits();
             document.getElementById('mapView').style.display = 'none';
             document.getElementById('battleView').style.display = 'block';
+            document.getElementById('activeEvents').style.display = 'none';
+            updateDifficultyDisplay(); // 更新难度显示
         }
 
         function backToMap() {
@@ -492,6 +657,8 @@
             document.getElementById('mapView').style.display = 'block';
             gameData.currentTarget = null;
             gameData.recruitedUnits = [];
+            gameData.activeEvents = [];
+            resetConsecutiveBattles(); // 返回地图重置连战疲劳
         }
 
         function renderUnits() {
@@ -521,7 +688,7 @@
             const stats = getUnitStats(unitId);
             if (gameData.gold >= stats.cost) {
                 gameData.gold -= stats.cost;
-                gameData.recruitedUnits.push({ id: unitId, name: unit.name, icon: unit.icon, attack: stats.attack, hp: stats.hp });
+                gameData.recruitedUnits.push({ id: unitId, name: unit.name, icon: unit.icon, attack: stats.attack, hp: stats.hp, maxHp: stats.hp });
                 updateGold();
                 updatePlayerStats();
                 renderUnits();
@@ -538,10 +705,311 @@
                 updateGold();
                 renderUnits();
                 updatePlayerStats();
-                gameData.recruitedUnits.forEach(u => { if (u.id === unitId) { const s = getUnitStats(unitId); u.attack = s.attack; u.hp = s.hp; } });
+                gameData.recruitedUnits.forEach(u => { if (u.id === unitId) { const s = getUnitStats(unitId); u.attack = s.attack; u.hp = s.hp; u.maxHp = s.hp; } });
                 updateRecruitedList();
             }
         }
+
+        // ========== 随机事件系统 ==========
+        function checkRandomEvents() {
+            if (gameData.activeEvents.length >= 3) return; // 最多 3 个事件同时存在
+            
+            const roll = Math.random() * 100;
+            let cumulativeChance = 0;
+            
+            // 过滤掉 5 回合内触发过的事件
+            const availableEvents = randomEvents.filter(e => {
+                const lastTrigger = gameData.eventHistory.find(h => h.eventId === e.id);
+                if (!lastTrigger) return true;
+                return gameData.battleTurn - lastTrigger.turn >= 5;
+            });
+            
+            for (const event of availableEvents) {
+                cumulativeChance += event.chance;
+                if (roll <= cumulativeChance) {
+                    activateEvent(event);
+                    break;
+                }
+            }
+        }
+
+        function activateEvent(event) {
+            const existingEvent = gameData.activeEvents.find(e => e.id === event.id);
+            if (existingEvent) {
+                existingEvent.duration = event.duration;
+                return;
+            }
+            
+            gameData.activeEvents.push({
+                ...event,
+                startTurn: gameData.battleTurn,
+                endTurn: gameData.battleTurn + event.duration
+            });
+            
+            gameData.eventHistory.push({ eventId: event.id, turn: gameData.battleTurn });
+            showEventNotification(event);
+            updateActiveEventsDisplay();
+        }
+
+        function showEventNotification(event) {
+            const notification = document.getElementById('eventNotification');
+            document.getElementById('eventIcon').textContent = event.icon;
+            document.getElementById('eventName').textContent = event.name;
+            document.getElementById('eventDesc').textContent = event.desc;
+            document.getElementById('eventDuration').textContent = `持续：${event.duration} 回合`;
+            
+            notification.style.display = 'block';
+            setTimeout(() => { notification.style.display = 'none'; }, 3000);
+        }
+
+        function updateActiveEventsDisplay() {
+            const container = document.getElementById('activeEvents');
+            const list = document.getElementById('activeEventsList');
+            
+            if (gameData.activeEvents.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'block';
+            list.innerHTML = gameData.activeEvents.map(e => {
+                const remainingTurns = e.endTurn - gameData.battleTurn;
+                return `
+                    <div class="active-event-item">
+                        <span>${e.icon} ${e.name}: ${e.desc}</span>
+                        <span class="event-turns">${remainingTurns} 回合</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function applyEventEffects(baseAttack, baseHp, isPlayer) {
+            let modifiedAttack = baseAttack;
+            let modifiedHp = baseHp;
+            
+            gameData.activeEvents.forEach(event => {
+                const effect = event.effect;
+                
+                // 全局效果
+                if (effect.all) {
+                    if (effect.all.attack) modifiedAttack = Math.floor(modifiedAttack * (1 + effect.all.attack));
+                    if (effect.all.defense) modifiedHp = Math.floor(modifiedHp * (1 + effect.all.defense));
+                }
+                
+                // 兵种特定效果
+                const hasInfantry = gameData.recruitedUnits.some(u => u.id === 'infantry' || u.id === 'pikeman' || u.id === 'shieldman');
+                const hasCavalry = gameData.recruitedUnits.some(u => u.id === 'cavalry');
+                const hasArcher = gameData.recruitedUnits.some(u => u.id === 'archer');
+                
+                if (effect.infantry && hasInfantry && effect.infantry.defense) {
+                    modifiedHp = Math.floor(modifiedHp * (1 + effect.infantry.defense));
+                }
+                if (effect.cavalry && hasCavalry) {
+                    if (effect.cavalry.speed) modifiedAttack = Math.floor(modifiedAttack * 1.2);
+                }
+                if (effect.archer && hasArcher && effect.archer.accuracy) {
+                    modifiedAttack = Math.floor(modifiedAttack * (1 + effect.archer.accuracy));
+                }
+                
+                // 近战兵种狂暴化
+                if (effect.melee && hasInfantry) {
+                    if (effect.melee.attack) modifiedAttack = Math.floor(modifiedAttack * (1 + effect.melee.attack));
+                }
+            });
+            
+            return { attack: Math.max(1, modifiedAttack), hp: Math.max(1, modifiedHp) };
+        }
+
+        function updateEvents() {
+            gameData.activeEvents = gameData.activeEvents.filter(e => e.endTurn > gameData.battleTurn);
+            updateActiveEventsDisplay();
+        }
+        // ========== 随机事件系统结束 ==========
+
+        // ========== 难度系统 ==========
+        
+        // 计算难度倍率（基于胜利次数）
+        function calculateDifficultyScale() {
+            // 公式：1 + (victoryCount * 0.12) + (victoryCount² * 0.005)
+            const scale = 1 + (gameData.victoryCount * 0.12) + (gameData.victoryCount * gameData.victoryCount * 0.005);
+            gameData.difficultyScale = Math.round(scale * 100) / 100;
+            return gameData.difficultyScale;
+        }
+
+        // 获取兵种克制关系
+        function getCounterModifier(attackerUnitId, defenderUnitId) {
+            const attackerCounter = gameData.unitCounters[attackerUnitId];
+            const defenderCounter = gameData.unitCounters[defenderUnitId];
+            
+            if (!attackerCounter || !defenderCounter) return { attackMod: 0, defenseMod: 0, critMod: 0 };
+            
+            // 坦克免疫克制
+            if (attackerCounter.immune && defenderCounter.immune) return { attackMod: 0, defenseMod: 0, critMod: 0 };
+            if (defenderCounter.immune) return { attackMod: 0, defenseMod: 0, critMod: 0 };
+            
+            let attackMod = 0, defenseMod = 0, critMod = 0;
+            
+            // 检查是否克制对方
+            if (attackerCounter.strong.includes(defenderUnitId)) {
+                attackMod = 0.4;  // +40% 攻击
+                defenseMod = 0.2; // +20% 防御
+                critMod = 0.1;    // +10% 暴击
+            }
+            
+            // 检查是否被对方克制
+            if (attackerCounter.weak.includes(defenderUnitId)) {
+                attackMod = -0.25;  // -25% 攻击
+                defenseMod = -0.3;  // -30% 防御
+                critMod = -0.05;    // -5% 暴击
+            }
+            
+            // 特殊加成（长矛兵对骑兵）
+            if (attackerCounter.bonusVs && attackerCounter.bonusVs.includes(defenderUnitId)) {
+                attackMod = Math.max(attackMod, 0.6);  // +60% 攻击
+                defenseMod = Math.max(defenseMod, 0.3); // +30% 防御
+                critMod = Math.max(critMod, 0.15);      // +15% 暴击
+            }
+            
+            // 特殊抗性（盾兵对弓箭手）
+            if (defenderCounter.resistVs && defenderCounter.resistVs.includes(attackerUnitId)) {
+                if (attackMod > 0) attackMod *= 0.5; // 克制效果减半
+            }
+            
+            return { attackMod, defenseMod, critMod };
+        }
+
+        // 计算连战疲劳惩罚
+        function getFatiguePenalty() {
+            return gameData.consecutiveBattles * 0.08; // 每场 -8%
+        }
+
+        // 计算兵力损耗
+        function calculateCasualties(damageTakenRatio, isVictory) {
+            const baseRate = 0.15; // 基础 15% 损耗
+            
+            let casualtyRate = baseRate;
+            
+            // 胜利减少损耗，失败增加损耗
+            if (isVictory) {
+                casualtyRate *= (1 - damageTakenRatio * 0.5); // 大胜减少最多 50% 损耗
+            } else {
+                casualtyRate *= 1.5; // 失败增加 50% 损耗
+            }
+            
+            // 连战疲劳增加损耗
+            casualtyRate *= (1 + getFatiguePenalty());
+            
+            // 限制在 5%-50% 之间
+            casualtyRate = Math.max(0.05, Math.min(0.50, casualtyRate));
+            
+            return Math.round(casualtyRate * 100); // 返回百分比
+        }
+
+        // 应用难度系统到战斗属性
+        function applyDifficultySystem(baseAttack, baseHp, unitList, isPlayer) {
+            let modifiedAttack = baseAttack;
+            let modifiedHp = baseHp;
+            
+            if (!isPlayer) {
+                // 敌人应用难度倍率
+                modifiedAttack = Math.floor(modifiedAttack * gameData.difficultyScale);
+                modifiedHp = Math.floor(modifiedHp * gameData.difficultyScale);
+            } else {
+                // 玩家应用连战疲劳
+                const fatigue = getFatiguePenalty();
+                if (fatigue > 0) {
+                    modifiedAttack = Math.floor(modifiedAttack * (1 - fatigue));
+                    modifiedHp = Math.floor(modifiedHp * (1 - fatigue));
+                }
+            }
+            
+            return { attack: Math.max(1, modifiedAttack), hp: Math.max(1, modifiedHp) };
+        }
+
+        // 计算兵种克制后的属性
+        function applyUnitCounters(playerUnits, enemyUnits) {
+            const playerModifiers = { attack: 0, defense: 0, crit: 0 };
+            const enemyModifiers = { attack: 0, defense: 0, crit: 0 };
+            
+            // 统计双方兵种
+            const playerTypes = {};
+            const enemyTypes = {};
+            
+            playerUnits.forEach(u => { playerTypes[u.id] = (playerTypes[u.id] || 0) + 1; });
+            enemyUnits.forEach(u => { enemyTypes[u.id] = (enemyTypes[u.id] || 0) + 1; });
+            
+            // 计算玩家对敌人的克制
+            Object.keys(playerTypes).forEach(pType => {
+                Object.keys(enemyTypes).forEach(eType => {
+                    const mod = getCounterModifier(pType, eType);
+                    const ratio = playerTypes[pType] / playerUnits.length;
+                    playerModifiers.attack += mod.attackMod * ratio;
+                    playerModifiers.defense += mod.defenseMod * ratio;
+                    playerModifiers.crit += mod.critMod * ratio;
+                });
+            });
+            
+            // 计算敌人对玩家的克制
+            Object.keys(enemyTypes).forEach(eType => {
+                Object.keys(playerTypes).forEach(pType => {
+                    const mod = getCounterModifier(eType, pType);
+                    const ratio = enemyTypes[eType] / enemyUnits.length;
+                    enemyModifiers.attack += mod.attackMod * ratio;
+                    enemyModifiers.defense += mod.defenseMod * ratio;
+                    enemyModifiers.crit += mod.critMod * ratio;
+                });
+            });
+            
+            return { playerModifiers, enemyModifiers };
+        }
+
+        // 重置连战计数（返回地图时）
+        function resetConsecutiveBattles() {
+            gameData.consecutiveBattles = 0;
+        }
+
+        // 更新难度显示面板
+        function updateDifficultyDisplay() {
+            const container = document.getElementById('difficultyStats');
+            if (!container) return;
+            
+            const scale = calculateDifficultyScale();
+            const fatigue = getFatiguePenalty();
+            const fatiguePercent = (fatigue * 100).toFixed(0);
+            
+            // 计算兵种优势
+            let advantageText = '';
+            if (gameData.currentTarget && gameData.recruitedUnits.length > 0) {
+                const { playerModifiers } = applyUnitCounters(gameData.recruitedUnits, [{id: 'enemy'}]);
+                if (playerModifiers.attack > 0.1) {
+                    advantageText = '<span class="stat-good">克制敌方 (+{0}%)</span>'.replace('{0}', (playerModifiers.attack * 100).toFixed(0));
+                } else if (playerModifiers.attack < -0.1) {
+                    advantageText = '<span class="stat-warning">被敌方克制 ({0}%)</span>'.replace('{0}', (playerModifiers.attack * 100).toFixed(0));
+                } else {
+                    advantageText = '<span>势均力敌</span>';
+                }
+            }
+            
+            container.innerHTML = `
+                <div class="difficulty-stat">
+                    <span>📈 难度倍率</span>
+                    <span class="stat-value">${(scale * 100).toFixed(0)}%</span>
+                </div>
+                <div class="difficulty-stat">
+                    <span>🏆 胜利场次</span>
+                    <span class="stat-value">${gameData.victoryCount}</span>
+                </div>
+                <div class="difficulty-stat">
+                    <span>⚔️ 连战次数</span>
+                    <span class="${fatigue > 0 ? 'stat-warning' : 'stat-good'}">${gameData.consecutiveBattles} ${fatigue > 0 ? '(疲劳 ' + fatiguePercent + '%)' : ''}</span>
+                </div>
+                <div class="difficulty-stat">
+                    <span>🎯 兵种优势</span>
+                    <span>${advantageText}</span>
+                </div>
+            `;
+        }
+        // ========== 难度系统结束 ==========
 
         function updatePlayerStats() {
             const totalAttack = gameData.recruitedUnits.reduce((sum, u) => sum + u.attack, 0);
@@ -616,34 +1084,67 @@
         let battleInterval = null;
 
         function showBattleProcess() {
+            gameData.battleTurn = 0;
+            gameData.activeEvents = [];
+            gameData.eventHistory = [];
+            gameData.unitCasualties = [];
+            
+            // 连战次数 +1
+            gameData.consecutiveBattles++;
+            
             const totalAttack = gameData.recruitedUnits.reduce((sum, u) => sum + u.attack, 0);
             const totalDefense = gameData.recruitedUnits.reduce((sum, u) => sum + u.hp, 0);
+            
+            // 计算难度倍率
+            const difficultyScale = calculateDifficultyScale();
+            
             // 随机攻击力：基础攻击 ±20%
-            const enemyRandomFactor = 0.8 + Math.random() * 0.4; // 0.8 ~ 1.2
-            const enemyAttack = Math.max(1, Math.floor(gameData.currentTarget.attack * enemyRandomFactor));
+            const enemyRandomFactor = 0.8 + Math.random() * 0.4;
+            const baseEnemyAttack = Math.max(1, Math.floor(gameData.currentTarget.attack * enemyRandomFactor * difficultyScale));
             // 随机防御力：基础防御 ±15%
-            const enemyDefenseRandomFactor = 0.85 + Math.random() * 0.3; // 0.85 ~ 1.15
-            const enemyDefense = Math.max(1, Math.floor(gameData.currentTarget.defense * enemyDefenseRandomFactor));
-            // 我方攻击力随机波动（±10%）
-            const playerRandomFactor = 0.9 + Math.random() * 0.2; // 0.9 ~ 1.1
-            const playerAttack = Math.max(1, Math.floor(totalAttack * playerRandomFactor));
-            // 我方防御力随机波动（±10%）
-            const playerDefenseRandomFactor = 0.9 + Math.random() * 0.2; // 0.9 ~ 1.1
-            const playerDefense = Math.max(1, Math.floor(totalDefense * playerDefenseRandomFactor));
+            const enemyDefenseRandomFactor = 0.85 + Math.random() * 0.3;
+            const baseEnemyDefense = Math.max(1, Math.floor(gameData.currentTarget.defense * enemyDefenseRandomFactor * difficultyScale));
+            
+            // 计算兵种克制
+            const { playerModifiers, enemyModifiers } = applyUnitCounters(gameData.recruitedUnits, [{id: 'enemy'}]);
+            
+            // 我方基础攻击和防御（应用克制和疲劳）
+            let basePlayerAttack = Math.max(1, Math.floor(totalAttack * 0.95));
+            let basePlayerDefense = Math.max(1, Math.floor(totalDefense * 0.95));
+            
+            // 应用兵种克制加成
+            if (playerModifiers.attack > 0) basePlayerAttack = Math.floor(basePlayerAttack * (1 + playerModifiers.attack));
+            if (playerModifiers.defense > 0) basePlayerDefense = Math.floor(basePlayerDefense * (1 + playerModifiers.defense));
+            
+            // 应用连战疲劳
+            const fatigue = getFatiguePenalty();
+            if (fatigue > 0) {
+                basePlayerAttack = Math.floor(basePlayerAttack * (1 - fatigue));
+                basePlayerDefense = Math.floor(basePlayerDefense * (1 - fatigue));
+            }
             
             battleProcessData = {
-                playerMaxHp: playerDefense,
-                playerHp: playerDefense,
-                playerAttack: playerAttack,
-                enemyMaxHp: enemyDefense,
-                enemyHp: enemyDefense,
-                enemyAttack: enemyAttack,
+                playerMaxHp: basePlayerDefense,
+                playerHp: basePlayerDefense,
+                basePlayerAttack: basePlayerAttack,
+                basePlayerHp: basePlayerDefense,
+                enemyMaxHp: baseEnemyDefense,
+                enemyHp: baseEnemyDefense,
+                baseEnemyAttack: baseEnemyAttack,
+                baseEnemyHp: baseEnemyDefense,
                 enemyName: gameData.currentTarget.name,
                 enemyIcon: gameData.currentTarget.icon,
                 logs: [],
                 round: 1,
-                isFinished: false
+                isFinished: false,
+                playerCritBonus: playerModifiers.crit,
+                enemyCritBonus: enemyModifiers.crit
             };
+            
+            // 初始事件检查（20% 概率触发）
+            if (Math.random() < 0.2) {
+                checkRandomEvents();
+            }
             
             // 初始化界面
             document.getElementById('enemySideIcon').src = battleProcessData.enemyIcon;
@@ -668,8 +1169,34 @@
             const data = battleProcessData;
             const actionsContainer = document.getElementById('battleActions');
             
+            gameData.battleTurn++;
+            updateEvents();
+            
+            // 每 2 回合触发新事件
+            if (gameData.battleTurn > 1 && gameData.battleTurn % 2 === 0) {
+                checkRandomEvents();
+            }
+            
+            // 应用事件效果
+            const playerStats = applyEventEffects(data.basePlayerAttack, data.basePlayerHp, true);
+            const enemyStats = applyEventEffects(data.baseEnemyAttack, data.baseEnemyHp, false);
+            
+            // 添加事件日志
+            if (gameData.activeEvents.length > 0) {
+                const newEvents = gameData.activeEvents.filter(e => e.startTurn === gameData.battleTurn);
+                newEvents.forEach(e => {
+                    const eventLog = document.createElement('div');
+                    eventLog.className = 'action-entry';
+                    eventLog.style.background = 'rgba(243,156,18,0.2)';
+                    eventLog.style.borderLeft = '4px solid #f39c12';
+                    eventLog.innerHTML = `<span class="action-icon">${e.icon}</span><span class="action-text">⚡ ${e.name}：${e.desc}</span>`;
+                    actionsContainer.appendChild(eventLog);
+                    actionsContainer.scrollTop = actionsContainer.scrollHeight;
+                });
+            }
+            
             // 我方攻击
-            const playerDamage = Math.min(data.playerAttack, data.enemyHp);
+            const playerDamage = Math.min(playerStats.attack, data.enemyHp);
             const isPlayerCrit = Math.random() > 0.8; // 20%暴击
             const actualPlayerDamage = isPlayerCrit ? Math.floor(playerDamage * 1.5) : playerDamage;
             
@@ -698,7 +1225,7 @@
             setTimeout(() => {
                 if (data.isFinished) return;
                 
-                const enemyDamage = Math.min(data.enemyAttack, data.playerHp);
+                const enemyDamage = Math.min(enemyStats.attack, data.playerHp);
                 const isEnemyCrit = Math.random() > 0.85; // 15%暴击
                 const actualEnemyDamage = isEnemyCrit ? Math.floor(enemyDamage * 1.5) : enemyDamage;
                 
@@ -756,11 +1283,12 @@
                 document.getElementById('battleProcessModal').classList.remove('active');
                 
                 // 计算统计数据
-                const damageDealt = data.playerAttack * (data.round - (data.enemyHp > 0 ? 0 : 1));
-                const damageTaken = data.enemyAttack * (data.round - 1);
+                const damageDealt = data.basePlayerAttack * (data.round - (data.enemyHp > 0 ? 0 : 1));
+                const damageTaken = data.baseEnemyAttack * (data.round - 1);
                 
                 if (isVictory) {
                     gameData.gold += gameData.currentTarget.reward;
+                    gameData.victoryCount++; // 胜利次数 +1
                 }
                 
                 // 收集所有日志
@@ -793,7 +1321,9 @@
                         { label: '造成伤害', value: damageDealt, type: 'damage' },
                         { label: '受到伤害', value: damageTaken, type: 'damage' },
                         { label: '战斗回合', value: data.round, type: 'normal' },
-                        { label: isVictory ? '获得金币' : '损失兵力', value: isVictory ? `+${gameData.currentTarget.reward}` : gameData.recruitedUnits.length, type: isVictory ? 'gold' : 'damage' }
+                        { label: isVictory ? '获得金币' : '损失兵力', value: isVictory ? `+${gameData.currentTarget.reward}` : gameData.recruitedUnits.length, type: isVictory ? 'gold' : 'damage' },
+                        { label: '难度倍率', value: `${(gameData.difficultyScale * 100).toFixed(0)}%`, type: 'normal' },
+                        { label: '胜利场次', value: gameData.victoryCount, type: 'normal' }
                     ]
                 });
                 
@@ -813,10 +1343,10 @@
             
             // 快速计算战斗结果
             const data = battleProcessData;
-            const totalAttack = data.playerAttack;
-            const totalDefense = data.playerMaxHp;
-            const enemyAttack = data.enemyAttack;
-            const enemyDefense = data.enemyMaxHp;
+            const totalAttack = data.basePlayerAttack;
+            const totalDefense = data.basePlayerHp;
+            const enemyAttack = data.baseEnemyAttack;
+            const enemyDefense = data.baseEnemyHp;
             
             let playerHp = totalDefense, enemyHp = enemyDefense;
             let round = 0;
