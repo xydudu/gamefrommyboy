@@ -48,8 +48,10 @@
         
         html, body {
             width: 100%;
-            height: 100%;
-            overflow: hidden;
+            min-height: 100%;
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
             background: 
                 radial-gradient(ellipse at top, #1a1a2e 0%, transparent 50%),
@@ -83,15 +85,24 @@
         /* 主容器 */
         .app-container {
             position: relative;
-            display: grid;
-            grid-template-rows: auto 1fr auto;
+            display: flex;
+            flex-direction: column;
             width: 100%;
-            height: 100%;
+            min-height: 100vh;
             padding: var(--space-lg);
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
             gap: var(--space-lg);
             z-index: 1;
+        }
+        
+        /* 主游戏区 - 允许内容自然扩展 */
+        .game-area {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+            flex: 1;
         }
         
         /* HUD 头部 */
@@ -154,16 +165,6 @@
             color: var(--neon-yellow);
         }
         
-        /* 难度信息 */
-        .difficulty-badge {
-            background: linear-gradient(135deg, var(--neon-red), var(--neon-pink));
-            padding: var(--space-xs) var(--space-md);
-            border-radius: var(--radius-md);
-            font-size: 12px;
-            font-weight: bold;
-            box-shadow: 0 0 10px rgba(255, 45, 85, 0.5);
-        }
-        
         /* 主游戏区 */
         .game-area {
             position: relative;
@@ -175,14 +176,12 @@
         
         /* 地图区域 */
         .map-section {
-            flex: 1;
             background: var(--bg-glass);
             backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
             border-radius: var(--radius-lg);
             padding: var(--space-lg);
             box-shadow: var(--glass-shadow);
-            overflow: hidden;
         }
         
         .section-title {
@@ -199,9 +198,6 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: var(--space-md);
-            height: calc(100% - 40px);
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
         }
         
         .target-card {
@@ -332,7 +328,6 @@
             display: none;
             flex-direction: column;
             gap: var(--space-lg);
-            height: 100%;
         }
         
         .battle-view.active {
@@ -484,6 +479,13 @@
             background-clip: text;
         }
         
+        .result-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+        
         /* 响应式 */
         @media (max-width: 768px) {
             .app-container {
@@ -578,7 +580,7 @@
                 
                 <!-- 招募区域 -->
                 <div class="action-dock">
-                    <h3 style="text-align: center; color: var(--neon-green); margin-bottom: var(--space-md);">⚔️ 兵种招募</h3>
+                    <h3 style="text-align: center; color: var(--neon-green); margin-bottom: var(--space-md);">⚔️ 兵种招募与升级</h3>
                     <div class="units-carousel" id="unitsCarousel"></div>
                     <div class="action-buttons">
                         <button class="btn btn-secondary" onclick="backToMap()">← 返回地图</button>
@@ -605,7 +607,7 @@
                 <div class="result-icon" id="resultIcon">🏆</div>
                 <h2 class="result-title" id="resultTitle">胜利！</h2>
                 <p id="resultMessage" style="color: var(--text-muted); margin-bottom: var(--space-lg);">敌军已被征服</p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); margin-bottom: var(--space-lg);">
+                <div class="result-stats">
                     <div class="battle-stat">
                         <div class="battle-stat-label">造成伤害</div>
                         <div class="battle-stat-value" id="damageDealt">0</div>
@@ -614,8 +616,20 @@
                         <div class="battle-stat-label">获得金币</div>
                         <div class="battle-stat-value" style="color: var(--neon-yellow);" id="goldEarned">0</div>
                     </div>
+                    <div class="battle-stat">
+                        <div class="battle-stat-label">战斗回合</div>
+                        <div class="battle-stat-value" id="battleRounds">0</div>
+                    </div>
+                    <div class="battle-stat">
+                        <div class="battle-stat-label">难度倍率</div>
+                        <div class="battle-stat-value" style="color: var(--neon-purple);" id="difficultyScale">100%</div>
+                    </div>
                 </div>
-                <button class="btn btn-primary" onclick="closeResultModal()" style="width: 100%;">继续征战</button>
+                <div class="action-buttons" style="margin-bottom: var(--space-md);">
+                    <button class="btn btn-secondary" onclick="continueCurrentBattle()">⚔️ 继续当前征战</button>
+                    <button class="btn btn-primary" onclick="challengeNextDifficulty()">🔥 挑战下一难度</button>
+                </div>
+                <button class="btn btn-secondary" onclick="closeResultModal()" style="width: 100%;">关闭</button>
             </div>
         </div>
     </div>
@@ -728,18 +742,23 @@
         function renderUnitsCarousel() {
             document.getElementById('unitsCarousel').innerHTML = gameData.units.filter(u => u.unlocked).map(unit => {
                 const stats = getUnitStats(unit.id);
+                const levelData = gameData.unitLevels[unit.id];
                 return `
                     <div class="unit-mini-card">
                         <div class="unit-mini-header">
                             <span class="unit-mini-icon">${unit.emoji}</span>
                             <span class="unit-mini-name">${unit.name}</span>
+                            <span style="font-size: 10px; color: var(--neon-yellow);">Lv.${levelData.level}</span>
                         </div>
                         <div class="unit-mini-stats">
                             <span>⚔️${stats.attack}</span>
                             <span>❤️${stats.hp}</span>
                             <span>💰${stats.cost}</span>
                         </div>
-                        <button class="btn btn-primary" onclick="recruitUnit('${unit.id}')" style="padding: 4px 8px; font-size: 11px;">招募</button>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="btn btn-primary" onclick="recruitUnit('${unit.id}')" style="flex: 2; padding: 4px 8px; font-size: 11px;">招募</button>
+                            <button class="btn btn-secondary" onclick="upgradeUnit('${unit.id}')" style="flex: 1; padding: 4px 8px; font-size: 11px;" ${gameData.gold < levelData.upgradeCost ? 'disabled' : ''}>升级</button>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -757,6 +776,18 @@
                     attack: stats.attack, 
                     hp: stats.hp 
                 });
+                updateUI();
+                renderUnitsCarousel();
+                updatePlayerStats();
+            }
+        }
+        
+        function upgradeUnit(unitId) {
+            const levelData = gameData.unitLevels[unitId];
+            if (gameData.gold >= levelData.upgradeCost) {
+                gameData.gold -= levelData.upgradeCost;
+                levelData.level++;
+                levelData.upgradeCost = Math.floor(levelData.upgradeCost * 1.5);
                 updateUI();
                 renderUnitsCarousel();
                 updatePlayerStats();
@@ -824,9 +855,11 @@
             let playerHp = totalDefense;
             let enemyHp = enemyDefense;
             let damageDealt = 0;
+            let rounds = 0;
             
-            // 简化战斗计算
-            while (playerHp > 0 && enemyHp > 0) {
+            // 回合制战斗模拟
+            while (playerHp > 0 && enemyHp > 0 && rounds < 50) {
+                rounds++;
                 enemyHp -= totalAttack;
                 damageDealt += totalAttack;
                 if (enemyHp <= 0) break;
@@ -838,27 +871,42 @@
             if (isVictory) {
                 gameData.gold += gameData.currentTarget.reward;
                 gameData.victoryCount++;
-                // 难度成长
+                // 难度成长公式
                 gameData.difficultyScale = 1 + (gameData.victoryCount * 0.12) + (gameData.victoryCount * gameData.victoryCount * 0.005);
             }
             
-            showResult(isVictory, damageDealt, gameData.currentTarget.reward);
+            showResult(isVictory, damageDealt, gameData.currentTarget.reward, rounds);
             updateUI();
         }
         
-        function showResult(isVictory, damage, reward) {
+        function showResult(isVictory, damage, reward, rounds) {
             document.getElementById('resultIcon').textContent = isVictory ? '🏆' : '💀';
             document.getElementById('resultTitle').textContent = isVictory ? '胜利！' : '失败！';
             document.getElementById('resultTitle').className = 'result-title ' + (isVictory ? 'victory' : 'defeat');
             document.getElementById('resultMessage').textContent = isVictory ? '敌军已被征服' : '军团需要更强大的力量';
             document.getElementById('damageDealt').textContent = damage;
             document.getElementById('goldEarned').textContent = isVictory ? '+' + reward : '0';
+            document.getElementById('battleRounds').textContent = rounds;
+            document.getElementById('difficultyScale').textContent = Math.round(gameData.difficultyScale * 100) + '%';
             document.getElementById('resultModal').classList.add('active');
         }
         
         function closeResultModal() {
             document.getElementById('resultModal').classList.remove('active');
             backToMap();
+        }
+        
+        function continueCurrentBattle() {
+            closeResultModal();
+        }
+        
+        function challengeNextDifficulty() {
+            closeResultModal();
+            // 额外增加难度
+            gameData.victoryCount += 2;
+            gameData.difficultyScale = 1 + (gameData.victoryCount * 0.12) + (gameData.victoryCount * gameData.victoryCount * 0.005);
+            gameData.recruitedUnits = [];
+            alert(`🔥 挑战模式开启！\n\n难度提升至：${Math.round(gameData.difficultyScale * 100)}%\n\n请重新招募兵种，准备迎接更强的敌人！`);
         }
     </script>
 </body>
