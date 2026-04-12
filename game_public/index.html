@@ -134,6 +134,26 @@
             color: var(--neon-yellow);
         }
         
+        /* 税收显示 */
+        .tax-display {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            background: rgba(255, 204, 0, 0.1);
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--neon-yellow);
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--neon-yellow);
+            animation: taxPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes taxPulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(255, 204, 0, 0.3); }
+            50% { box-shadow: 0 0 15px rgba(255, 204, 0, 0.6); }
+        }
+        
         /* 每日签到按钮 */
         .btn-daily-checkin {
             display: flex;
@@ -1371,6 +1391,7 @@
             /* 签到按钮优化 */
             .btn-daily-checkin { font-size: 12px; padding: var(--space-xs) var(--space-sm); }
             .gold-display { font-size: 16px; }
+            .tax-display { font-size: 12px; }
             
             /* 战斗按钮栏优化 */
             .battle-action-bar { padding: var(--space-sm); }
@@ -1539,6 +1560,9 @@
                 <button class="btn-daily-checkin" onclick="dailyCheckIn()" id="dailyCheckinBtn">
                     📅 <span id="checkinText">今日签到</span>
                 </button>
+                <div class="tax-display" id="taxDisplay" style="display: none;">
+                    <span>📜</span><span id="taxAmount">0</span>
+                </div>
                 <div class="gold-display">
                     <span>💰</span><span id="goldAmount">1000</span>
                 </div>
@@ -1809,6 +1833,10 @@
             gameOver: false,           // 是否游戏结束
             gameVictory: false,        // 是否通关
             bankruptcyWarning: false,  // 破产警告是否已显示
+            // ========== 税收系统 ==========
+            taxRate: 0.1,              // 基础税率 10%
+            totalTaxCollected: 0,      // 累计税收
+            lastBattleTax: 0,          // 上一场战斗税收
             // ========== 统计数据 ==========
             stats: {
                 totalBattles: 0,       // 总战斗场次
@@ -2046,7 +2074,47 @@
             return { attack: Math.floor(unit.baseAttack * multiplier), hp: Math.floor(unit.baseHp * multiplier), cost: unit.baseCost };
         }
 
-        function updateGold() { document.getElementById('goldAmount').textContent = gameData.gold; }
+        function updateGold() { 
+            document.getElementById('goldAmount').textContent = gameData.gold;
+            updateTaxDisplay();
+        }
+        
+        // 税收系统
+        function calculateTax(reward) {
+            // 基础税收 = 战斗奖励 × 税率
+            const baseTax = Math.floor(reward * gameData.taxRate);
+            
+            // 征服领地加成：每个征服的领地 +5% 税率
+            const territoryBonus = gameData.firstClears.length * 0.05;
+            
+            // 总税率 = 基础税率 + 领地加成（最高 50%）
+            const totalTaxRate = Math.min(gameData.taxRate + territoryBonus, 0.5);
+            
+            const tax = Math.floor(reward * totalTaxRate);
+            return tax;
+        }
+        
+        function collectTax(amount) {
+            const tax = calculateTax(amount);
+            gameData.totalTaxCollected += tax;
+            gameData.lastBattleTax = tax;
+            gameData.gold += tax;
+            return tax;
+        }
+        
+        function updateTaxDisplay() {
+            const taxDisplay = document.getElementById('taxDisplay');
+            const taxAmount = document.getElementById('taxAmount');
+            
+            if (!taxDisplay || !taxAmount) return;
+            
+            if (gameData.totalTaxCollected > 0) {
+                taxDisplay.style.display = 'flex';
+                taxAmount.textContent = gameData.totalTaxCollected;
+            } else {
+                taxDisplay.style.display = 'none';
+            }
+        }
 
         function renderMap() {
             document.getElementById('mapGrid').innerHTML = gameData.targets.map(t => {
@@ -2903,9 +2971,16 @@
                     if (gameData.currentTarget.id === 8) {
                         gameData.finalBossDefeated = true;
                     }
+                    
+                    // 收税（胜利时）
+                    const tax = collectTax(gameData.currentTarget.reward);
                 } else {
                     gameData.stats.totalLosses++;
                     gameData.stats.totalBattles++;
+                    
+                    // 失败也有少量税收（失败奖励的 30% 作为基数）
+                    const failReward = Math.floor(gameData.currentTarget.reward * 0.3);
+                    const tax = collectTax(failReward);
                 }
                 
                 // 收集所有日志
@@ -2937,8 +3012,14 @@
                 
                 if (isVictory) {
                     logs.push({ type: 'result', text: `🎉 胜利！获得 💰 ${gameData.currentTarget.reward}` });
+                    if (gameData.lastBattleTax > 0) {
+                        logs.push({ type: 'result', text: `📜 税收收入：💰 +${gameData.lastBattleTax}` });
+                    }
                 } else {
                     logs.push({ type: 'result', text: '💀 失败！军团全军覆没' });
+                    if (gameData.lastBattleTax > 0) {
+                        logs.push({ type: 'result', text: `📜 税收收入：💰 +${gameData.lastBattleTax}` });
+                    }
                 }
                 
                 showBattleResult({
