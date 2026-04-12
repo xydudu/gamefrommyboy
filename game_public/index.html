@@ -134,6 +134,40 @@
             color: var(--neon-yellow);
         }
         
+        /* 每日签到按钮 */
+        .btn-daily-checkin {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
+            color: white;
+            padding: var(--space-sm) var(--space-md);
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-daily-checkin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 136, 0.6);
+        }
+        
+        .btn-daily-checkin:disabled {
+            background: linear-gradient(135deg, #555, #666);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+            opacity: 0.6;
+        }
+        
+        .btn-daily-checkin.claimed {
+            background: linear-gradient(135deg, var(--neon-yellow), var(--neon-orange));
+        }
+        
         /* 地图视图 */
         .map-view { display: block; }
         
@@ -1334,6 +1368,10 @@
             .battle-side.player { padding-left: 20px; }
             .battle-arena::before { font-size: 32px; }
             
+            /* 签到按钮优化 */
+            .btn-daily-checkin { font-size: 12px; padding: var(--space-xs) var(--space-sm); }
+            .gold-display { font-size: 16px; }
+            
             /* 战斗按钮栏优化 */
             .battle-action-bar { padding: var(--space-sm); }
             .btn-battle { font-size: 18px; }
@@ -1497,8 +1535,13 @@
     <div class="game-container">
         <div class="top-bar">
             <div class="game-title">⚔️ 征服者</div>
-            <div class="gold-display">
-                <span>💰</span><span id="goldAmount">1000</span>
+            <div style="display: flex; align-items: center; gap: var(--space-md);">
+                <button class="btn-daily-checkin" onclick="dailyCheckIn()" id="dailyCheckinBtn">
+                    📅 <span id="checkinText">今日签到</span>
+                </button>
+                <div class="gold-display">
+                    <span>💰</span><span id="goldAmount">1000</span>
+                </div>
             </div>
         </div>
 
@@ -1880,10 +1923,109 @@
             unitLevels: {}
         };
 
+        // 每日签到系统
+        function getCheckInData() {
+            const saved = localStorage.getItem('conqueror_checkin');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+            return {
+                lastCheckIn: null,
+                consecutiveDays: 0,
+                totalCheckIns: 0
+            };
+        }
+        
+        function saveCheckInData(data) {
+            localStorage.setItem('conqueror_checkin', JSON.stringify(data));
+        }
+        
+        function canCheckIn() {
+            const data = getCheckInData();
+            if (!data.lastCheckIn) return true;
+            
+            const lastDate = new Date(data.lastCheckIn);
+            const today = new Date();
+            
+            // 检查是否是同一天
+            if (lastDate.toDateString() === today.toDateString()) {
+                return false; // 今天已经签到过了
+            }
+            
+            return true; // 可以签到
+        }
+        
+        function updateCheckInButton() {
+            const btn = document.getElementById('dailyCheckinBtn');
+            const text = document.getElementById('checkinText');
+            const data = getCheckInData();
+            
+            if (!btn || !text) return;
+            
+            if (!canCheckIn()) {
+                btn.disabled = true;
+                text.textContent = '已签到';
+                btn.classList.add('claimed');
+            } else {
+                btn.disabled = false;
+                text.textContent = '今日签到';
+                btn.classList.remove('claimed');
+            }
+        }
+        
+        function dailyCheckIn() {
+            if (!canCheckIn()) {
+                alert('今天已经签到过了！');
+                return;
+            }
+            
+            const data = getCheckInData();
+            const today = new Date();
+            
+            // 检查是否连续签到
+            if (data.lastCheckIn) {
+                const lastDate = new Date(data.lastCheckIn);
+                const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 1) {
+                    data.consecutiveDays++; // 连续签到
+                } else {
+                    data.consecutiveDays = 1; // 中断，重新计算
+                }
+            } else {
+                data.consecutiveDays = 1; // 第一次签到
+            }
+            
+            data.lastCheckIn = today.toISOString();
+            data.totalCheckIns++;
+            saveCheckInData(data);
+            
+            // 计算奖励（根据连续签到天数）
+            const baseReward = 100;
+            const consecutiveBonus = Math.min(data.consecutiveDays * 20, 200); // 最多 +200
+            const totalReward = baseReward + consecutiveBonus;
+            
+            gameData.gold += totalReward;
+            updateGold();
+            updateCheckInButton();
+            
+            let message = `📅 签到成功！\n\n`;
+            message += `💰 获得金币：${totalReward}\n`;
+            message += `🔥 连续签到：${data.consecutiveDays} 天\n`;
+            message += `📊 总签到：${data.totalCheckIns} 次\n\n`;
+            
+            if (data.consecutiveDays >= 7) {
+                message += `🎉 恭喜！连续签到 7 天达成！`;
+            }
+            
+            alert(message);
+        }
+        
         function initGame() {
             initUnitLevels();
             renderMap();
             updateGold();
+            updateCheckInButton(); // 初始化签到按钮状态
         }
 
         // 页面加载后自动初始化游戏
