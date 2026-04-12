@@ -1834,7 +1834,7 @@
             gameVictory: false,        // 是否通关
             bankruptcyWarning: false,  // 破产警告是否已显示
             // ========== 税收系统 ==========
-            taxRate: 0.1,              // 基础税率 10%
+            battleTax: 100,            // 每场战斗固定税收
             totalTaxCollected: 0,      // 累计税收
             lastBattleTax: 0,          // 上一场战斗税收
             // ========== 统计数据 ==========
@@ -2080,22 +2080,8 @@
         }
         
         // 税收系统
-        function calculateTax(reward) {
-            // 基础税收 = 战斗奖励 × 税率
-            const baseTax = Math.floor(reward * gameData.taxRate);
-            
-            // 征服领地加成：每个征服的领地 +5% 税率
-            const territoryBonus = gameData.firstClears.length * 0.05;
-            
-            // 总税率 = 基础税率 + 领地加成（最高 50%）
-            const totalTaxRate = Math.min(gameData.taxRate + territoryBonus, 0.5);
-            
-            const tax = Math.floor(reward * totalTaxRate);
-            return tax;
-        }
-        
-        function collectTax(amount) {
-            const tax = calculateTax(amount);
+        function collectTax() {
+            const tax = gameData.battleTax; // 固定 100 金币
             gameData.totalTaxCollected += tax;
             gameData.lastBattleTax = tax;
             gameData.gold += tax;
@@ -2971,17 +2957,13 @@
                     if (gameData.currentTarget.id === 8) {
                         gameData.finalBossDefeated = true;
                     }
-                    
-                    // 收税（胜利时）
-                    const tax = collectTax(gameData.currentTarget.reward);
                 } else {
                     gameData.stats.totalLosses++;
                     gameData.stats.totalBattles++;
-                    
-                    // 失败也有少量税收（失败奖励的 30% 作为基数）
-                    const failReward = Math.floor(gameData.currentTarget.reward * 0.3);
-                    const tax = collectTax(failReward);
                 }
+                
+                // 收税（每场战斗固定 100 金币，不分输赢）
+                const tax = collectTax();
                 
                 // 收集所有日志
                 const logs = [];
