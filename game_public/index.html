@@ -506,24 +506,28 @@
         /* 侦察区域 */
         .scout-section {
             text-align: center;
-            margin-top: var(--space-lg);
+            margin-top: var(--space-md);
+            padding-top: var(--space-md);
+            border-top: 1px solid var(--glass-border);
         }
         
         .btn-scout {
             background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
             color: white;
-            padding: var(--space-md) var(--space-xl);
-            font-size: 16px;
+            padding: var(--space-sm) var(--space-lg);
+            font-size: 14px;
             border: none;
             border-radius: var(--radius-md);
             cursor: pointer;
             box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
             transition: all 0.3s ease;
+            width: 100%;
+            max-width: 280px;
         }
         
         .btn-scout:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.6);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 212, 255, 0.6);
         }
         
         .btn-scout:disabled {
@@ -534,13 +538,16 @@
         }
         
         .scout-result {
-            margin-top: var(--space-md);
-            padding: var(--space-md);
+            margin-top: var(--space-sm);
+            padding: var(--space-sm);
             background: rgba(0, 212, 255, 0.1);
             border: 1px solid var(--neon-cyan);
             border-radius: var(--radius-md);
             text-align: left;
             animation: scoutFadeIn 0.5s ease;
+            max-width: 280px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         @keyframes scoutFadeIn {
@@ -1508,6 +1515,11 @@
                             <div class="stat-box"><div class="stat-label">防御力</div><div class="stat-value" id="enemyDefense">100</div></div>
                         </div>
                     </div>
+                    <!-- 侦察按钮 - 放在敌方势力区域 -->
+                    <div class="scout-section">
+                        <button class="btn-scout" onclick="scoutEnemy()">🔍 侦察敌军 (💰100)</button>
+                        <div id="scoutResult" class="scout-result" style="display: none;"></div>
+                    </div>
                 </div>
                 <div class="battle-panel">
                     <div class="panel-title">🛡️ 我方势力</div>
@@ -1534,12 +1546,6 @@
 
             <div class="unlock-section">
                 <button class="btn-unlock" onclick="showUnlockModal()">🔓 解锁新兵种</button>
-            </div>
-
-            <!-- 侦察按钮 -->
-            <div class="scout-section">
-                <button class="btn-scout" onclick="scoutEnemy()">🔍 侦察敌军 (💰100)</button>
-                <div id="scoutResult" class="scout-result" style="display: none;"></div>
             </div>
 
             <!-- 战斗按钮 - 最高优先级 -->
