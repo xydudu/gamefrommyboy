@@ -1837,6 +1837,7 @@
             battleTax: 100,            // 每场战斗固定税收
             totalTaxCollected: 0,      // 累计税收
             lastBattleTax: 0,          // 上一场战斗税收
+            currentBattleExpense: 0,   // 当前战斗花费
             // ========== 统计数据 ==========
             stats: {
                 totalBattles: 0,       // 总战斗场次
@@ -2081,11 +2082,22 @@
         
         // 税收系统
         function collectTax() {
+            // 如果战斗花费低于 100，不收税
+            if (gameData.currentBattleExpense < 100) {
+                gameData.lastBattleTax = 0;
+                return 0;
+            }
+            
             const tax = gameData.battleTax; // 固定 100 金币
             gameData.totalTaxCollected += tax;
             gameData.lastBattleTax = tax;
             gameData.gold += tax;
             return tax;
+        }
+        
+        // 重置战斗花费
+        function resetBattleExpense() {
+            gameData.currentBattleExpense = 0;
         }
         
         function updateTaxDisplay() {
@@ -2129,6 +2141,7 @@
             gameData.battleTurn = 0;
             gameData.unitCasualties = [];
             gameData.hasScouted = false; // 重置侦察状态
+            resetBattleExpense(); // 重置战斗花费
             
             // 初始化敌方兵种配置（隐藏）
             const enemyConfig = gameData.enemyConfig[targetId];
@@ -2216,6 +2229,7 @@
             const stats = getUnitStats(unitId);
             if (gameData.gold >= stats.cost) {
                 gameData.gold -= stats.cost;
+                gameData.currentBattleExpense += stats.cost; // 记录花费
                 gameData.recruitedUnits.push({ id: unitId, name: unit.name, icon: unit.icon, attack: stats.attack, hp: stats.hp, maxHp: stats.hp });
                 updateGold();
                 updatePlayerStats();
@@ -2229,6 +2243,7 @@
             const levelData = gameData.unitLevels[unitId];
             if (gameData.gold >= levelData.upgradeCost) {
                 gameData.gold -= levelData.upgradeCost;
+                gameData.currentBattleExpense += levelData.upgradeCost; // 记录花费
                 levelData.level++;
                 levelData.upgradeCost = Math.floor(levelData.upgradeCost * 1.5);
                 updateGold();
@@ -2701,6 +2716,7 @@
             
             if (!unit.unlocked && gameData.gold >= unit.unlockCost) {
                 gameData.gold -= unit.unlockCost;
+                gameData.currentBattleExpense += unit.unlockCost; // 记录花费
                 unit.unlocked = true;
                 updateGold();
                 renderUnits();
@@ -2992,15 +3008,22 @@
                     });
                 }
                 
-                if (isVictory) {
-                    logs.push({ type: 'result', text: `🎉 胜利！获得 💰 ${gameData.currentTarget.reward}` });
-                    if (gameData.lastBattleTax > 0) {
+                // 税收信息
+                if (gameData.currentBattleExpense >= 100) {
+                    if (isVictory) {
+                        logs.push({ type: 'result', text: `🎉 胜利！获得 💰 ${gameData.currentTarget.reward}` });
+                        logs.push({ type: 'result', text: `📜 税收收入：💰 +${gameData.lastBattleTax}` });
+                    } else {
+                        logs.push({ type: 'result', text: '💀 失败！军团全军覆没' });
                         logs.push({ type: 'result', text: `📜 税收收入：💰 +${gameData.lastBattleTax}` });
                     }
                 } else {
-                    logs.push({ type: 'result', text: '💀 失败！军团全军覆没' });
-                    if (gameData.lastBattleTax > 0) {
-                        logs.push({ type: 'result', text: `📜 税收收入：💰 +${gameData.lastBattleTax}` });
+                    if (isVictory) {
+                        logs.push({ type: 'result', text: `🎉 胜利！获得 💰 ${gameData.currentTarget.reward}` });
+                        logs.push({ type: 'result', text: `💸 战斗花费仅 ${gameData.currentBattleExpense}，未达税收标准` });
+                    } else {
+                        logs.push({ type: 'result', text: '💀 失败！军团全军覆没' });
+                        logs.push({ type: 'result', text: `💸 战斗花费仅 ${gameData.currentBattleExpense}，未达税收标准` });
                     }
                 }
                 
