@@ -1474,6 +1474,23 @@
             .side-icon { width: 40px; height: 40px; }
             .side-hp-bar { width: 80px; height: 10px; }
         }
+        
+        /* 结局弹窗额外样式 */
+        #victoryAchievements {
+            text-align: left;
+        }
+        
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-xs) 0;
+            font-size: 13px;
+        }
+        
+        .achievement-icon {
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
@@ -1661,6 +1678,45 @@
         </div>
     </div>
 
+    <!-- Game Over 弹窗 -->
+    <div class="battle-result-overlay" id="gameOverModal">
+        <div class="battle-result-content defeat">
+            <div class="result-header">
+                <div class="result-icon">💀</div>
+                <div class="result-title defeat">游戏结束</div>
+                <div class="result-subtitle">你的军团已经破产了...</div>
+            </div>
+            <div class="battle-stats" id="gameOverStats">
+                <!-- 动态生成统计数据 -->
+            </div>
+            <div style="display: flex; gap: var(--space-md); margin-top: var(--space-lg);">
+                <button class="btn-result victory" onclick="restartGame()" style="flex: 1;">🔄 重新开始</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通关弹窗 -->
+    <div class="battle-result-overlay" id="victoryModal">
+        <div class="battle-result-content victory">
+            <div class="result-header">
+                <div class="result-icon">🏆</div>
+                <div class="result-title victory">恭喜通关！</div>
+                <div class="result-subtitle">你已成为真正的征服者！</div>
+            </div>
+            <div class="battle-stats" id="victoryStats">
+                <!-- 动态生成统计数据 -->
+            </div>
+            <div id="victoryAchievements" style="margin-top: var(--space-md); padding: var(--space-md); background: rgba(255, 204, 0, 0.1); border-radius: var(--radius-md);">
+                <div style="font-size: 14px; font-weight: bold; color: var(--neon-yellow); margin-bottom: var(--space-sm);">🎖️ 成就解锁</div>
+                <div id="victoryAchievementsList"></div>
+            </div>
+            <div style="display: flex; gap: var(--space-md); margin-top: var(--space-lg);">
+                <button class="btn-result victory" onclick="restartGame()" style="flex: 1;">🔄 再玩一次</button>
+                <button class="btn-result" onclick="closeVictoryModal()" style="flex: 1; background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));">🏠 返回标题</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // 随机事件池
         const randomEvents = [
@@ -1704,6 +1760,22 @@
             activeEvents: [],
             eventHistory: [],
             battleTurn: 0,
+            // ========== 游戏结局系统 ==========
+            firstClears: [],           // 首次通关的领地 ID
+            finalBossDefeated: false,  // 是否击败最终 BOSS
+            gameOver: false,           // 是否游戏结束
+            gameVictory: false,        // 是否通关
+            bankruptcyWarning: false,  // 破产警告是否已显示
+            // ========== 统计数据 ==========
+            stats: {
+                totalBattles: 0,       // 总战斗场次
+                totalWins: 0,          // 总胜利场次
+                totalLosses: 0,        // 总失败场次
+                highestLevel: 1,       // 最高等级
+                totalRounds: 0,        // 总回合数
+                startTime: Date.now(), // 游戏开始时间
+                endTime: null          // 游戏结束时间
+            },
             // ========== 难度系统 ==========
             victoryCount: 0,          // 胜利次数
             consecutiveBattles: 0,    // 连战次数
@@ -2674,6 +2746,21 @@
                 if (isVictory) {
                     gameData.gold += gameData.currentTarget.reward;
                     gameData.victoryCount++; // 胜利次数 +1
+                    gameData.stats.totalWins++; // 统计更新
+                    gameData.stats.totalBattles++;
+                    
+                    // 记录首次通关
+                    if (!gameData.firstClears.includes(gameData.currentTarget.id)) {
+                        gameData.firstClears.push(gameData.currentTarget.id);
+                    }
+                    
+                    // 检查是否击败最终 BOSS（虚空神殿 ID=8）
+                    if (gameData.currentTarget.id === 8) {
+                        gameData.finalBossDefeated = true;
+                    }
+                } else {
+                    gameData.stats.totalLosses++;
+                    gameData.stats.totalBattles++;
                 }
                 
                 // 收集所有日志
@@ -2730,6 +2817,12 @@
                 updatePlayerStats();
                 updateRecruitedList();
                 renderUnits();
+                
+                // 战斗后检查 Game Over 和通关
+                if (isVictory) {
+                    checkVictory();  // 先检查通关
+                    checkGameOver(); // 再检查破产
+                }
             }, 1000);
         }
 
@@ -2820,6 +2913,163 @@
             modal.classList.remove('active');
             // 恢复 body 滚动
             document.body.classList.remove('modal-open');
+        }
+
+        // 检查 Game Over（金币为 0）
+        function checkGameOver() {
+            if (gameData.gold <= 0 && !gameData.gameOver) {
+                gameData.gameOver = true;
+                gameData.stats.endTime = Date.now();
+                showGameOver();
+                return true;
+            }
+            
+            // 破产警告
+            if (gameData.gold < 100 && !gameData.bankruptcyWarning) {
+                alert('⚠️ 警告：金币不足 100，小心破产！');
+                gameData.bankruptcyWarning = true;
+            }
+            
+            return false;
+        }
+        
+        // 显示 Game Over
+        function showGameOver() {
+            const stats = gameData.stats;
+            const playTime = Math.floor((stats.endTime - stats.startTime) / 60000); // 分钟
+            
+            document.getElementById('gameOverStats').innerHTML = `
+                <div class="battle-stat-box">
+                    <div class="battle-stat-label">征服领地</div>
+                    <div class="battle-stat-value gold">${gameData.firstClears.length} / 8</div>
+                </div>
+                <div class="battle-stat-box">
+                    <div class="battle-stat-label">战斗胜利</div>
+                    <div class="battle-stat-value">${stats.totalWins} 场</div>
+                </div>
+                <div class="battle-stat-box">
+                    <div class="battle-stat-label">战斗失败</div>
+                    <div class="battle-stat-value damage">${stats.totalLosses} 场</div>
+                </div>
+                <div class="battle-stat-box">
+                    <div class="battle-stat-label">坚持时间</div>
+                    <div class="battle-stat-value">${playTime} 分钟</div>
+                </div>
+            `;
+            
+            document.getElementById('gameOverModal').classList.add('active');
+        }
+        
+        // 重新开始游戏
+        function restartGame() {
+            // 关闭弹窗
+            document.getElementById('gameOverModal').classList.remove('active');
+            document.getElementById('victoryModal').classList.remove('active');
+            
+            // 重置游戏数据
+            gameData.gold = 1000;
+            gameData.currentTarget = null;
+            gameData.recruitedUnits = [];
+            gameData.activeEvents = [];
+            gameData.eventHistory = [];
+            gameData.battleTurn = 0;
+            gameData.firstClears = [];
+            gameData.finalBossDefeated = false;
+            gameData.gameOver = false;
+            gameData.gameVictory = false;
+            gameData.bankruptcyWarning = false;
+            gameData.victoryCount = 0;
+            gameData.consecutiveBattles = 0;
+            gameData.difficultyScale = 1.0;
+            gameData.unitCasualties = [];
+            gameData.enemyUnits = [];
+            gameData.hasScouted = false;
+            
+            // 重置统计数据
+            gameData.stats = {
+                totalBattles: 0,
+                totalWins: 0,
+                totalLosses: 0,
+                highestLevel: 1,
+                totalRounds: 0,
+                startTime: Date.now(),
+                endTime: null
+            };
+            
+            // 重置兵种等级
+            gameData.unitLevels = {};
+            initUnitLevels();
+            
+            // 重新初始化游戏
+            renderMap();
+            updateGold();
+            backToMap();
+            
+            alert('🎮 新游戏开始！祝你征服所有领地！');
+        }
+        
+        // 检查通关
+        function checkVictory() {
+            // 条件 1：征服所有 8 个领地
+            const allTerritoriesConquered = gameData.firstClears.length === 8;
+            
+            // 条件 2：击败最终 BOSS
+            const finalBossDefeated = gameData.finalBossDefeated === true;
+            
+            if (allTerritoriesConquered && finalBossDefeated && !gameData.gameVictory) {
+                gameData.gameVictory = true;
+                gameData.stats.endTime = Date.now();
+                showVictory();
+                return true;
+            }
+            
+            return false;
+        }
+        
+        // 显示通关
+        function showVictory() {
+            const stats = gameData.stats;
+            const playTime = Math.floor((stats.endTime - stats.startTime) / 60000); // 分钟
+            const winRate = stats.totalBattles > 0 ? Math.round((stats.totalWins / stats.totalBattles) * 100) : 0;
+            
+            document.getElementById('victoryStats').innerHTML = `
+                <div class="battle-stat-box">
+                    <div class="battle-stat-label">总战斗场次</div>
+                    <div class="battle-stat-value">${stats.totalBattles} 场</div>
+                </div>
+                <div class="battle-stat-box">
+                    <div class="battle-stat-label">胜率</div>
+                    <div class="battle-stat-value gold">${winRate}%</div>
+                </div>
+                <div class="battle-stat-box">
+                    <div class="battle-stat-label">征服领地</div>
+                    <div class="battle-stat-value">8 / 8</div>
+                </div>
+                <div class="battle-stat-box">
+                    <div class="battle-stat-label">通关时间</div>
+                    <div class="battle-stat-value">${playTime} 分钟</div>
+                </div>
+            `;
+            
+            // 成就解锁
+            const achievements = [];
+            if (winRate >= 75) achievements.push({ icon: '🏅', name: '不败传说：胜率≥75%' });
+            if (gameData.gold >= 3000) achievements.push({ icon: '💰', name: '富可敌国：金币≥3000' });
+            if (stats.totalLosses === 0) achievements.push({ icon: '⚡', name: '完美通关：零失败' });
+            if (playTime < 30) achievements.push({ icon: '🚀', name: '速通大师：<30 分钟' });
+            achievements.push({ icon: '👑', name: '征服者：通关所有领地' });
+            
+            document.getElementById('victoryAchievementsList').innerHTML = achievements
+                .map(a => `<div class="achievement-item"><span class="achievement-icon">${a.icon}</span><span>${a.name}</span></div>`)
+                .join('');
+            
+            document.getElementById('victoryModal').classList.add('active');
+        }
+        
+        // 关闭通关弹窗
+        function closeVictoryModal() {
+            document.getElementById('victoryModal').classList.remove('active');
+            backToMap();
         }
 
         // 继续当前征战（返回地图，不重置难度）
