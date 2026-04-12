@@ -1097,16 +1097,87 @@
             box-shadow: 0 10px 40px rgba(255, 204, 0, 0.5);
             animation: slideDown 0.5s ease;
         }
-        
-        @keyframes slideDown { 
-            from { top: -100px; opacity: 0; } 
-            to { top: 20px; opacity: 1; } 
+
+        @keyframes slideDown {
+            from { top: -100px; opacity: 0; }
+            to { top: 20px; opacity: 1; }
         }
-        
+
         .event-icon { font-size: 48px; margin-bottom: var(--space-sm); }
         .event-name { font-size: 18px; font-weight: bold; color: var(--neon-yellow); margin-bottom: var(--space-xs); }
         .event-desc { font-size: 13px; color: #ccc; margin-bottom: var(--space-xs); }
         .event-duration { font-size: 11px; color: #888; }
+
+        /* 游戏内通知（Toast） */
+        .game-toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(145deg, rgba(30, 30, 50, 0.95), rgba(20, 20, 35, 0.95));
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-lg);
+            padding: var(--space-md) var(--space-lg);
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            animation: toastSlideIn 0.4s ease, toastFadeOut 0.4s ease forwards;
+            min-width: 280px;
+            max-width: 90%;
+        }
+
+        .game-toast.info {
+            border: 2px solid var(--neon-cyan);
+            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.4);
+        }
+
+        .game-toast.warning {
+            border: 2px solid var(--neon-yellow);
+            box-shadow: 0 10px 40px rgba(255, 204, 0, 0.4);
+        }
+
+        .game-toast.error {
+            border: 2px solid var(--neon-red);
+            box-shadow: 0 10px 40px rgba(255, 45, 85, 0.4);
+        }
+
+        .game-toast.success {
+            border: 2px solid var(--neon-green);
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.4);
+        }
+
+        @keyframes toastSlideIn {
+            from { top: -50px; opacity: 0; }
+            to { top: 80px; opacity: 1; }
+        }
+
+        @keyframes toastFadeOut {
+            0%, 80% { opacity: 1; }
+            100% { opacity: 0; top: 20px; }
+        }
+
+        .toast-icon {
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .toast-content {
+            flex: 1;
+            text-align: left;
+        }
+
+        .toast-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .toast-message {
+            font-size: 12px;
+            color: #ccc;
+        }
         
         /* 战斗过程动画界面 */
         .battle-process-overlay { 
@@ -1941,6 +2012,64 @@
             unitLevels: {}
         };
 
+        // ========== 游戏内通知系统（Toast） ==========
+        let toastTimeout = null;
+
+        function showToast(type, title, message, duration = 3000) {
+            // 清除之前的 toast
+            const existingToast = document.querySelector('.game-toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+            if (toastTimeout) {
+                clearTimeout(toastTimeout);
+            }
+
+            const icons = {
+                info: 'ℹ️',
+                warning: '⚠️',
+                error: '❌',
+                success: '✅'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `game-toast ${type}`;
+            toast.innerHTML = `
+                <span class="toast-icon">${icons[type] || icons.info}</span>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+            `;
+
+            document.body.appendChild(toast);
+
+            // 自动移除
+            toastTimeout = setTimeout(() => {
+                if (toast && toast.parentNode) {
+                    toast.remove();
+                }
+            }, duration);
+        }
+
+        // 兼容旧代码的 showNotification 函数
+        function showNotification(eventName, eventDesc, icon, duration = 2) {
+            const notification = document.getElementById('eventNotification');
+            if (notification) {
+                document.getElementById('eventIcon').textContent = icon;
+                document.getElementById('eventName').textContent = eventName;
+                document.getElementById('eventDesc').textContent = eventDesc;
+                document.getElementById('eventDuration').textContent = `持续：${duration} 回合`;
+                notification.style.display = 'block';
+                notification.style.animation = 'slideDown 0.5s ease';
+
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // ========== 初始化游戏 ==========
         function initGame() {
             initUnitLevels();
             renderMap();
@@ -2517,19 +2646,19 @@
         // 侦察敌军功能
         function scoutEnemy() {
             const scoutCost = 100;
-            
+
             // 检查是否已经侦察过
             if (gameData.hasScouted) {
-                alert('已经侦察过该领地了！');
+                showToast('warning', '情报重复', '该领地已侦察过，无需再次侦察');
                 return;
             }
-            
+
             // 检查金币是否足够
             if (gameData.gold < scoutCost) {
-                alert(`金币不足！需要 ${scoutCost} 金币`);
+                showToast('error', '金币不足', `侦察需要 ${scoutCost} 金币，请先赚取更多金币`);
                 return;
             }
-            
+
             // 扣除金币
             gameData.gold -= scoutCost;
             updateGold();
@@ -3053,7 +3182,7 @@
             
             // 破产警告
             if (gameData.gold < 100 && !gameData.bankruptcyWarning) {
-                alert('⚠️ 警告：金币不足 100，小心破产！');
+                showToast('warning', '财政危机', '金币不足 100，请谨慎消费，小心破产！');
                 gameData.bankruptcyWarning = true;
             }
             
@@ -3131,8 +3260,8 @@
             renderMap();
             updateGold();
             backToMap();
-            
-            alert('🎮 新游戏开始！祝你征服所有领地！');
+
+            showToast('success', '新的征程', '祝你征服所有领地，成为真正的征服者！');
         }
         
         // 检查通关
