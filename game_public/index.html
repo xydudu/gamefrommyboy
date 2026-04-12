@@ -1837,10 +1837,16 @@
             firstClears: [],           // 首次通关的领地 ID
             finalBossDefeated: false,  // 是否击败最终 BOSS
             gameOver: false,           // 是否游戏结束
-            gameOverReason: null,      // Game Over 原因：'exhausted' | 'bankruptcy'
+            gameOverReason: null,      // Game Over 原因
             gameVictory: false,        // 是否通关
-            bankruptcyWarning: false,  // 破产警告是否已显示
-            criticalWarning: false,    // 严重警告是否已显示
+            // ========== 连败系统 ==========
+            consecutiveLosses: 0,      // 当前连败场次
+            warnedDefeatStreak1: false,// 连败 1 场警告
+            warnedDefeatStreak2: false,// 连败 2 场警告
+            warnedGold: false,         // 金币警告
+            inBattle: false,           // 是否在战斗中
+            bankruptcyWarning: false,  // 破产警告（旧）
+            criticalWarning: false,    // 严重警告（旧）
             // ========== 统计数据 ==========
             stats: {
                 totalBattles: 0,       // 总战斗场次
@@ -2223,7 +2229,9 @@
                 updatePlayerStats();
                 renderUnits();
                 updateRecruitedList();
-                checkGameOver(); // 检查是否破产
+                // 招募时不触发 Game Over，只扣金币
+            } else {
+                showToast('error', '金币不足', `需要 ${stats.cost} 金币，当前只有 ${gameData.gold} 金币`);
             }
         }
 
@@ -2238,7 +2246,9 @@
                 updatePlayerStats();
                 gameData.recruitedUnits.forEach(u => { if (u.id === unitId) { const s = getUnitStats(unitId); u.attack = s.attack; u.hp = s.hp; u.maxHp = s.hp; } });
                 updateRecruitedList();
-                checkGameOver(); // 检查是否破产
+                // 升级时不触发 Game Over，只扣金币
+            } else {
+                showToast('error', '金币不足', `升级需要 ${levelData.upgradeCost} 金币`);
             }
         }
 
@@ -2774,7 +2784,8 @@
             gameData.activeEvents = [];
             gameData.eventHistory = [];
             gameData.unitCasualties = [];
-            
+            gameData.inBattle = true;  // 进入战斗
+
             // 连战次数 +1
             gameData.consecutiveBattles++;
             
@@ -3075,12 +3086,20 @@
                 updatePlayerStats();
                 updateRecruitedList();
                 renderUnits();
-                
-                // 战斗后检查 Game Over 和通关
+
+                // 更新连败计数
                 if (isVictory) {
+                    gameData.consecutiveLosses = 0; // 胜利重置连败
                     checkVictory();  // 先检查通关
+                } else {
+                    gameData.consecutiveLosses++; // 失败累加连败
                 }
-                checkGameOver(); // 无论胜负都检查破产
+
+                // 战斗结束，退出战斗状态
+                gameData.inBattle = false;
+
+                // 战斗后检查 Game Over
+                checkGameOver();
             }, 1000);
         }
 
@@ -3173,50 +3192,38 @@
             document.body.classList.remove('modal-open');
         }
 
-        // 检查 Game Over（财政破产判定）
-        // 优化：不仅金币 <= 0，当金币低于最低操作成本时也判定为 Game Over
+        // 检查 Game Over（连败淘汰制 + 穷途末路）
         function checkGameOver() {
-            // 定义最低操作成本
-            const MIN_RECRUIT_COST = 50;   // 最便宜兵种（步兵）成本
-            const MIN_UPGRADE_COST = 40;   // 最低升级成本（基础 × 0.8）
-            const MIN_OPERATION_GOLD = 50; // 维持操作的最低金币
-
-            // 情况 1：金币归零，彻底破产
-            if (gameData.gold <= 0 && !gameData.gameOver) {
+            // 条件 1：连败≥3 场
+            if (gameData.consecutiveLosses >= 3 && !gameData.gameOver) {
                 gameData.gameOver = true;
-                gameData.gameOverReason = 'exhausted'; // 资源耗尽
+                gameData.gameOverReason = 'consecutive_defeats';
                 gameData.stats.endTime = Date.now();
                 showGameOver();
                 return true;
             }
 
-            // 情况 2：金币低于最低操作成本，无法继续征兵
-            if (gameData.gold < MIN_OPERATION_GOLD && !gameData.gameOver) {
-                // 检查是否还有未招募的便宜兵种
-                const canAffordAnyUnit = gameData.units.some(u => {
-                    return u.unlocked && gameData.gold >= u.baseCost;
-                });
+            // 条件 2：金币<30 且无领地可征（返回地图时检查）
+            if (gameData.gold < 30 && gameData.defeatedTerritories.length >= gameData.targets.length && !gameData.gameOver) {
+                gameData.gameOver = true;
+                gameData.gameOverReason = 'no_resources_no_land';
+                gameData.stats.endTime = Date.now();
+                showGameOver();
+                return true;
+            }
 
-                // 如果连最便宜的兵种都招募不起，判定 Game Over
-                if (!canAffordAnyUnit) {
-                    gameData.gameOver = true;
-                    gameData.gameOverReason = 'bankruptcy'; // 财政破产
-                    gameData.stats.endTime = Date.now();
-                    showGameOver();
-                    return true;
+            // 预警系统（只在战斗中触发）
+            if (gameData.inBattle) {
+                // 连败 1 场警告
+                if (gameData.consecutiveLosses === 1 && !gameData.warnedDefeatStreak1) {
+                    showToast('warning', '军心不稳', '连败 1 场，下一战请务必谨慎！');
+                    gameData.warnedDefeatStreak1 = true;
                 }
-            }
-
-            // 破产警告（提前提醒）
-            if (gameData.gold < 80 && !gameData.bankruptcyWarning) {
-                showToast('warning', '财政危机', '金币不足 80，最便宜的步兵也要 50 金币！');
-                gameData.bankruptcyWarning = true;
-            }
-
-            // 严重警告
-            if (gameData.gold < 50 && !gameData.criticalWarning) {
-                showToast('error', '极度危险', '金币不足以招募任何兵种，准备重新开始吧...');
-                gameData.criticalWarning = true;
+                // 连败 2 场危险警告
+                if (gameData.consecutiveLosses === 2 && !gameData.warnedDefeatStreak2) {
+                    showToast('error', '濒临崩溃', '再败一场，军团将溃散！');
+                    gameData.warnedDefeatStreak2 = true;
+                }
             }
 
             return false;
@@ -3228,14 +3235,30 @@
             const playTime = Math.floor((stats.endTime - stats.startTime) / 60000); // 分钟
 
             // 根据 Game Over 原因显示不同信息
-            const reasonText = gameData.gameOverReason === 'exhausted'
-                ? '资源耗尽，军团覆灭'
-                : '财政破产，无法征兵';
+            let reasonText = '';
+            let reasonIcon = '';
+            switch (gameData.gameOverReason) {
+                case 'consecutive_defeats':
+                    reasonIcon = '💀';
+                    reasonText = `连战连败，军心溃散（${gameData.consecutiveLosses} 连败）`;
+                    break;
+                case 'no_resources_no_land':
+                    reasonIcon = '💰';
+                    reasonText = '资源耗尽，穷途末路（金币不足且无领地可征）';
+                    break;
+                case 'surrender':
+                    reasonIcon = '🏳️';
+                    reasonText = '主动投降，虽败犹荣';
+                    break;
+                default:
+                    reasonIcon = '💀';
+                    reasonText = '军团覆灭';
+            }
 
             document.getElementById('gameOverStats').innerHTML = `
                 <div class="battle-stat-box">
                     <div class="battle-stat-label">失败原因</div>
-                    <div class="battle-stat-value damage">${reasonText}</div>
+                    <div class="battle-stat-value damage">${reasonIcon} ${reasonText}</div>
                 </div>
                 <div class="battle-stat-box">
                     <div class="battle-stat-label">征服领地</div>
