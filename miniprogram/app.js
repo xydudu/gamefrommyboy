@@ -107,6 +107,7 @@ App({
       gold: 1000,
       recruitedUnits: [],
       conqueredTerritories: [],
+      scoutedTerritories: [],
       victoryCount: 0,
       consecutiveLosses: 0,
       gameOver: false,

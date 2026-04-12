@@ -14,20 +14,41 @@
       <text class="status-icon">💀</text>
       <text class="status-value">{{consecutiveLosses}}连败</text>
     </view>
+    <view class="status-item" bindtap="toggleArmyPanel">
+      <text class="status-icon">🎖️</text>
+      <text class="status-value">军团</text>
+    </view>
   </view>
 
-  <!-- 我的军团 -->
-  <view class="my-army glass-card">
-    <view class="section-title">🎖️ 我的军团</view>
+  <!-- 我的军团面板 -->
+  <view class="army-panel glass-card {{showArmyPanel ? 'show' : 'hide'}}">
+    <view class="panel-header">
+      <text class="panel-title">🎖️ 我的军团 ({{recruitedUnits.length}}个单位)</text>
+      <text class="panel-close" bindtap="toggleArmyPanel">✕</text>
+    </view>
     <view class="unit-list">
       <view wx:for="{{recruitedUnits}}" wx:key="uid" class="unit-item">
         <text class="unit-icon">{{item.icon}}</text>
-        <text class="unit-name">{{item.name}}</text>
-        <text class="unit-hp">HP: {{item.hp}}/{{item.maxHp}}</text>
+        <view class="unit-info">
+          <text class="unit-name">{{item.name}}</text>
+          <view class="hp-bar">
+            <view class="hp-fill" style="width: {{item.hp / item.maxHp * 100}}%"></view>
+          </view>
+          <text class="unit-hp">{{item.hp}}/{{item.maxHp}}</text>
+        </view>
+        <view class="unit-actions">
+          <button class="btn-heal" bindtap="healUnit" data-index="{{index}}">💖</button>
+          <button class="btn-dismiss" bindtap="dismissUnit" data-index="{{index}}">✕</button>
+        </view>
       </view>
       <view wx:if="{{recruitedUnits.length === 0}}" class="empty-tip">
-        还没有招募任何兵种
+        还没有招募任何兵种，点击下方招募兵种
       </view>
+    </view>
+    <view class="army-actions">
+      <button class="btn-heal-all" bindtap="healAllUnits">
+        💖 全体治疗 ({{healCost}}💰)
+      </button>
     </view>
   </view>
 
@@ -38,7 +59,7 @@
       <view
         wx:for="{{targets}}"
         wx:key="id"
-        class="target-card {{isConquered(item.id) ? 'conquered' : ''}} {{isSelected ? 'selected' : ''}}"
+        class="target-card {{isConquered(item.id) ? 'conquered' : ''}} {{selectedTarget === item.id ? 'selected' : ''}}"
         bindtap="selectTarget"
         data-id="{{item.id}}"
       >
@@ -46,6 +67,63 @@
         <view class="target-name">{{item.name}}</view>
         <view class="target-reward">💰 {{item.reward}}</view>
         <view wx:if="{{isConquered(item.id)}}" class="conquered-mark">✓</view>
+        <view class="scout-btn" catchtap="scoutTarget" data-id="{{item.id}}">
+          🔍
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 侦察结果弹窗 -->
+  <view class="modal-overlay {{showScoutModal ? 'show' : ''}}" bindtap="closeScoutModal">
+    <view class="scout-modal" catchtap="stopPropagation">
+      <view class="modal-header">
+        <text class="modal-title">🔍 侦察情报</text>
+        <text class="modal-close" bindtap="closeScoutModal">✕</text>
+      </view>
+      <view class="scout-content">
+        <view class="scout-target-name">{{scoutData.targetName}}</view>
+        <view class="scout-enemy-list">
+          <view wx:for="{{scoutData.enemies}}" wx:key="id" class="scout-enemy">
+            <text class="scout-enemy-icon">{{enemy.icon}}</text>
+            <text class="scout-enemy-name">{{enemy.name}}</text>
+            <text class="scout-enemy-count">x{{enemy.count}}</text>
+          </view>
+        </view>
+        <view class="scout-tip">💡 根据敌方阵容调整你的兵种配置</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 兵种升级弹窗 -->
+  <view class="modal-overlay {{showUpgradeModal ? 'show' : ''}}" bindtap="closeUpgradeModal">
+    <view class="upgrade-modal" catchtap="stopPropagation">
+      <view class="modal-header">
+        <text class="modal-title">🎖️ 兵种升级</text>
+        <text class="modal-close" bindtap="closeUpgradeModal">✕</text>
+      </view>
+      <view class="upgrade-content">
+        <view class="upgrade-tip">点击兵种进行升级，提升战斗力</view>
+        <view class="unit-upgrade-list">
+          <view
+            wx:for="{{upgradeableUnits}}"
+            wx:key="id"
+            class="upgrade-item {{gameData.unitLevels[item.id].unlocked ? '' : 'locked'}}"
+            bindtap="upgradeUnit"
+            data-unit="{{item}}"
+          >
+            <text class="upgrade-icon">{{item.icon}}</text>
+            <view class="upgrade-info">
+              <text class="upgrade-name">{{item.name}}</text>
+              <text class="upgrade-level">Lv.{{gameData.unitLevels[item.id].level}}</text>
+            </view>
+            <view class="upgrade-stats">
+              <text class="stat">⚔️ {{getUnitAttack(item.id)}}</text>
+              <text class="stat">❤️ {{getUnitHp(item.id)}}</text>
+            </view>
+            <text class="upgrade-cost">💰 {{getUpgradeCost(item.id)}}</text>
+          </view>
+        </view>
       </view>
     </view>
   </view>
@@ -53,37 +131,42 @@
   <!-- 底部操作栏 -->
   <view class="action-bar glass-card">
     <view class="action-section">
-      <view class="section-label">🎖️ 招募</view>
+      <view class="section-label">
+        <text>🎖️ 招募</text>
+        <text class="upgrade-btn" bindtap="toggleUpgradeModal">📈 升级</text>
+      </view>
       <scroll-view scroll-x class="recruit-list">
         <view
           wx:for="{{availableUnits}}"
           wx:key="id"
           class="recruit-item {{gameData.unitLevels[item.id].unlocked ? '' : 'locked'}}"
-          bindtap="recruitUnit"
+          bindtap="handleUnitTap"
           data-unit="{{item}}"
         >
           <text class="recruit-icon">{{item.icon}}</text>
           <text class="recruit-name">{{item.name}}</text>
-          <text class="recruit-cost">💰 {{item.baseCost}}</text>
+          <text class="recruit-cost">💰 {{gameData.unitLevels[item.id].unlocked ? item.baseCost : item.unlockCost}}</text>
           <text wx:if="{{!gameData.unitLevels[item.id].unlocked}}" class="lock-mark">🔒</text>
         </view>
       </scroll-view>
     </view>
 
     <view class="action-section">
-      <button class="btn-primary" bindtap="startBattle" disabled="{{recruitedUnits.length === 0 || !selectedTarget}}">
-        ⚔️ 出征
-      </button>
-      <button class="btn-secondary" bindtap="returnToMap" wx:if="{{inBattle}}">
-        🏃 撤退
-      </button>
+      <view class="battle-buttons">
+        <button class="btn-primary" bindtap="startBattle" disabled="{{recruitedUnits.length === 0 || !selectedTarget}}">
+          ⚔️ 出征
+        </button>
+        <button class="btn-secondary" bindtap="scoutEnemy" disabled="{{!selectedTarget}}">
+          🔍 侦察
+        </button>
+      </view>
     </view>
   </view>
 
-  <!-- Toast 提示 -->
-  <view class="toast {{toast.show ? 'show' : ''}}">
-    <text class="toast-icon">{{toast.icon}}</text>
-    <text class="toast-title">{{toast.title}}</text>
-    <text class="toast-message">{{toast.message}}</text>
+  <!-- 连败警告指示器 -->
+  <view wx:if="{{consecutiveLosses >= 1}}" class="streak-warning {{consecutiveLosses >= 2 ? 'critical' : ''}}">
+    <text class="warning-icon">💀</text>
+    <text class="warning-text">{{consecutiveLosses === 1 ? '军心不稳' : '濒临崩溃'}}</text>
+    <text class="warning-count">{{consecutiveLosses}}连败</text>
   </view>
 </view>

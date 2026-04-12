@@ -1,6 +1,72 @@
 <!--pages/result/result.wxml - 战斗结果页面-->
 <view class="result-container">
-  <view class="result-card {{victory ? 'victory' : 'defeat'}}">
+  <!-- 游戏结束弹窗 -->
+  <view wx:if="{{gameOver}}" class="game-over-modal">
+    <view class="modal-content">
+      <view class="game-over-icon">💀</view>
+      <view class="game-over-title">游戏结束</view>
+      <view class="game-over-reason">{{gameOverReason}}</view>
+
+      <view class="game-over-stats">
+        <view class="stat-box">
+          <text class="stat-label">征服领地</text>
+          <text class="stat-value">{{conqueredTerritories}} / 8</text>
+        </view>
+        <view class="stat-box">
+          <text class="stat-label">胜利场次</text>
+          <text class="stat-value gold">{{victoryCount}}</text>
+        </view>
+        <view class="stat-box">
+          <text class="stat-label">失败场次</text>
+          <text class="stat-value damage">{{totalLosses}}</text>
+        </view>
+        <view class="stat-box">
+          <text class="stat-label">坚持时间</text>
+          <text class="stat-value">{{playTime}}分钟</text>
+        </view>
+      </view>
+
+      <view class="game-over-actions">
+        <button class="btn-primary" bindtap="restartGame">🔄 重新开始</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 通关结局弹窗 -->
+  <view wx:if="{{gameVictory}}" class="victory-modal">
+    <view class="modal-content">
+      <view class="victory-icon">👑</view>
+      <view class="victory-title">恭喜通关！</view>
+      <view class="victory-subtitle">您已征服所有领地，成为真正的征服者！</view>
+
+      <view class="victory-stats">
+        <view class="stat-box">
+          <text class="stat-label">总战斗场次</text>
+          <text class="stat-value">{{totalBattles}}</text>
+        </view>
+        <view class="stat-box">
+          <text class="stat-label">胜利场次</text>
+          <text class="stat-value gold">{{victoryCount}}</text>
+        </view>
+        <view class="stat-box">
+          <text class="stat-label">剩余金币</text>
+          <text class="stat-value gold">{{gold}}</text>
+        </view>
+        <view class="stat-box">
+          <text class="stat-label">游戏时间</text>
+          <text class="stat-value">{{playTime}}分钟</text>
+        </view>
+      </view>
+
+      <view class="victory-actions">
+        <button class="btn-primary" bindtap="continueGame">继续游戏</button>
+        <button class="btn-secondary" bindtap="restartGame">🔄 重新开始</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 普通结果页面 -->
+  <view wx:if="{{!gameOver && !gameVictory}}" class="result-card {{victory ? 'victory' : 'defeat'}}">
     <view class="result-icon">{{victory ? '🏆' : '💀'}}</view>
     <view class="result-title">{{victory ? '胜利！' : '失败！'}}</view>
     <view class="result-subtitle">{{victory ? '敌人已被征服' : '您的军团需要更强大的力量'}}</view>
@@ -18,20 +84,21 @@
         <text class="stat-label">连败场次</text>
         <text class="stat-value {{consecutiveLosses > 0 ? 'warning' : ''}}">{{consecutiveLosses}}</text>
       </view>
+      <view class="stat-box">
+        <text class="stat-label">征服领地</text>
+        <text class="stat-value">{{conqueredTerritories}} / 8</text>
+      </view>
     </view>
 
-    <view wx:if="{{gameOver}}" class="game-over-box">
-      <text class="game-over-title">💀 游戏结束</text>
-      <text class="game-over-reason">{{gameOverReason}}</text>
+    <view wx:if="{{victory && conqueredTerritories >= 7}}" class="final-boss-tip">
+      <text class="tip-icon">⚠️</text>
+      <text class="tip-text">最终 BOSS 即将出现！准备好您的最强军团！</text>
     </view>
-  </view>
 
-  <view class="result-actions">
-    <button class="btn-primary" bindtap="continueGame">
-      {{victory ? '继续征战' : '重整旗鼓'}}
-    </button>
-    <button class="btn-secondary" bindtap="restartGame" wx:if="{{gameOver}}">
-      🔄 重新开始
-    </button>
+    <view class="result-actions">
+      <button class="btn-primary" bindtap="continueGame">
+        {{victory ? '继续征战' : '重整旗鼓'}}
+      </button>
+    </view>
   </view>
 </view>
