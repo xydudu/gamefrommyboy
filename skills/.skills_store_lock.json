@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "game-designer-toolkit": {
+      "name": "Game Designer Toolkit",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=game-designer-toolkit",
+      "source": "skillhub",
+      "version": "1.0.0"
+    },
+    "wechat-mini-app": {
+      "name": "Wechat Mini App",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=wechat-mini-app",
+      "source": "skillhub",
+      "version": "2.3.6"
+    }
+  }
+}

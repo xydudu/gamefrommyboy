@@ -1,0 +1,28 @@
+<!--components/unit-card/unit-card.wxml-->
+<view class="unit-card {{type}} {{disabled ? 'disabled' : ''}}" bindtap="handleTap">
+  <view class="card-header">
+    <text class="unit-icon">{{icon}}</text>
+    <text class="unit-name">{{name}}</text>
+  </view>
+
+  <view class="card-stats">
+    <view class="stat-item">
+      <text class="stat-icon">⚔️</text>
+      <text class="stat-value">{{attack}}</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-icon">❤️</text>
+      <text class="stat-value">{{hp}}/{{maxHp}}</text>
+    </view>
+  </view>
+
+  <view class="card-footer">
+    <text class="cost">💰 {{cost}}</text>
+    <text wx:if="{{level > 1}}" class="level">Lv.{{level}}</text>
+  </view>
+
+  <view wx:if="{{!unlocked}}" class="lock-overlay">
+    <text class="lock-icon">🔒</text>
+    <text class="unlock-cost">{{unlockCost}} 金币解锁</text>
+  </view>
+</view>

@@ -1,0 +1,58 @@
+/* app.wxss - 全局样式 */
+page {
+  background:
+    radial-gradient(ellipse at top, #1a1a2e 0%, transparent 50%),
+    radial-gradient(ellipse at bottom, #0f3460 0%, transparent 50%),
+    linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 100%);
+  color: #fff;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif;
+}
+
+/* 霓虹配色 */
+.neon-red { color: #ff2d55; }
+.neon-pink { color: #ff6b9d; }
+.neon-purple { color: #c44cff; }
+.neon-blue { color: #00d4ff; }
+.neon-cyan { color: #00ffcc; }
+.neon-green { color: #00ff88; }
+.neon-yellow { color: #ffcc00; }
+.neon-orange { color: #ff8800; }
+
+/* 玻璃态卡片 */
+.glass-card {
+  background: rgba(30, 30, 50, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+}
+
+/* 按钮样式 */
+.btn-primary {
+  background: linear-gradient(135deg, #00d4ff, #00ffcc);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: bold;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ff2d55, #ff6b9d);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: bold;
+}
+
+/* 动画 */
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(0, 212, 255, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.8); }
+}

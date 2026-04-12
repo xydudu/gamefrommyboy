@@ -1,0 +1,89 @@
+<!--pages/index/index.wxml - 主界面-->
+<view class="container">
+  <!-- 顶部状态栏 -->
+  <view class="status-bar glass-card">
+    <view class="status-item">
+      <text class="status-icon">💰</text>
+      <text class="status-value">{{gold}}</text>
+    </view>
+    <view class="status-item">
+      <text class="status-icon">🏆</text>
+      <text class="status-value">{{victoryCount}}胜</text>
+    </view>
+    <view class="status-item {{consecutiveLosses > 0 ? 'warning' : ''}}">
+      <text class="status-icon">💀</text>
+      <text class="status-value">{{consecutiveLosses}}连败</text>
+    </view>
+  </view>
+
+  <!-- 我的军团 -->
+  <view class="my-army glass-card">
+    <view class="section-title">🎖️ 我的军团</view>
+    <view class="unit-list">
+      <view wx:for="{{recruitedUnits}}" wx:key="uid" class="unit-item">
+        <text class="unit-icon">{{item.icon}}</text>
+        <text class="unit-name">{{item.name}}</text>
+        <text class="unit-hp">HP: {{item.hp}}/{{item.maxHp}}</text>
+      </view>
+      <view wx:if="{{recruitedUnits.length === 0}}" class="empty-tip">
+        还没有招募任何兵种
+      </view>
+    </view>
+  </view>
+
+  <!-- 可征战的领地 -->
+  <view class="territories glass-card">
+    <view class="section-title">⚔️ 征战</view>
+    <view class="target-grid">
+      <view
+        wx:for="{{targets}}"
+        wx:key="id"
+        class="target-card {{isConquered(item.id) ? 'conquered' : ''}} {{isSelected ? 'selected' : ''}}"
+        bindtap="selectTarget"
+        data-id="{{item.id}}"
+      >
+        <view class="target-difficulty {{item.difficulty}}">{{getDifficultyText(item.difficulty)}}</view>
+        <view class="target-name">{{item.name}}</view>
+        <view class="target-reward">💰 {{item.reward}}</view>
+        <view wx:if="{{isConquered(item.id)}}" class="conquered-mark">✓</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="action-bar glass-card">
+    <view class="action-section">
+      <view class="section-label">🎖️ 招募</view>
+      <scroll-view scroll-x class="recruit-list">
+        <view
+          wx:for="{{availableUnits}}"
+          wx:key="id"
+          class="recruit-item {{gameData.unitLevels[item.id].unlocked ? '' : 'locked'}}"
+          bindtap="recruitUnit"
+          data-unit="{{item}}"
+        >
+          <text class="recruit-icon">{{item.icon}}</text>
+          <text class="recruit-name">{{item.name}}</text>
+          <text class="recruit-cost">💰 {{item.baseCost}}</text>
+          <text wx:if="{{!gameData.unitLevels[item.id].unlocked}}" class="lock-mark">🔒</text>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="action-section">
+      <button class="btn-primary" bindtap="startBattle" disabled="{{recruitedUnits.length === 0 || !selectedTarget}}">
+        ⚔️ 出征
+      </button>
+      <button class="btn-secondary" bindtap="returnToMap" wx:if="{{inBattle}}">
+        🏃 撤退
+      </button>
+    </view>
+  </view>
+
+  <!-- Toast 提示 -->
+  <view class="toast {{toast.show ? 'show' : ''}}">
+    <text class="toast-icon">{{toast.icon}}</text>
+    <text class="toast-title">{{toast.title}}</text>
+    <text class="toast-message">{{toast.message}}</text>
+  </view>
+</view>

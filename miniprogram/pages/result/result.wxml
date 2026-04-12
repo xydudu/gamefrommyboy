@@ -1,0 +1,37 @@
+<!--pages/result/result.wxml - 战斗结果页面-->
+<view class="result-container">
+  <view class="result-card {{victory ? 'victory' : 'defeat'}}">
+    <view class="result-icon">{{victory ? '🏆' : '💀'}}</view>
+    <view class="result-title">{{victory ? '胜利！' : '失败！'}}</view>
+    <view class="result-subtitle">{{victory ? '敌人已被征服' : '您的军团需要更强大的力量'}}</view>
+
+    <view class="result-stats">
+      <view wx:if="{{victory}}" class="stat-box">
+        <text class="stat-label">获得金币</text>
+        <text class="stat-value gold">+{{reward}}</text>
+      </view>
+      <view class="stat-box">
+        <text class="stat-label">胜利场次</text>
+        <text class="stat-value">{{victoryCount}}</text>
+      </view>
+      <view class="stat-box">
+        <text class="stat-label">连败场次</text>
+        <text class="stat-value {{consecutiveLosses > 0 ? 'warning' : ''}}">{{consecutiveLosses}}</text>
+      </view>
+    </view>
+
+    <view wx:if="{{gameOver}}" class="game-over-box">
+      <text class="game-over-title">💀 游戏结束</text>
+      <text class="game-over-reason">{{gameOverReason}}</text>
+    </view>
+  </view>
+
+  <view class="result-actions">
+    <button class="btn-primary" bindtap="continueGame">
+      {{victory ? '继续征战' : '重整旗鼓'}}
+    </button>
+    <button class="btn-secondary" bindtap="restartGame" wx:if="{{gameOver}}">
+      🔄 重新开始
+    </button>
+  </view>
+</view>

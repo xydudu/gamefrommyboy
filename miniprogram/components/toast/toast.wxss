@@ -1,0 +1,70 @@
+/* components/toast/toast.wxss */
+.toast-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.toast-overlay.show {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+}
+
+.toast-content {
+  background: rgba(30, 30, 50, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transform: scale(0.8);
+  transition: transform 0.3s;
+  min-width: 200px;
+}
+
+.toast-overlay.show .toast-content {
+  transform: scale(1);
+}
+
+.toast-content.info {
+  border-color: #00d4ff;
+}
+
+.toast-content.warning {
+  border-color: #ffcc00;
+}
+
+.toast-content.error {
+  border-color: #ff2d55;
+}
+
+.toast-content.success {
+  border-color: #00ff88;
+}
+
+.toast-icon {
+  font-size: 40px;
+}
+
+.toast-title {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.toast-message {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}

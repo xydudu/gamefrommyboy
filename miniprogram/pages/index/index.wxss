@@ -1,0 +1,291 @@
+/* pages/index/index.wxss */
+.container {
+  padding: 16px;
+  padding-bottom: 100px;
+}
+
+/* 状态栏 */
+.status-bar {
+  display: flex;
+  justify-content: space-around;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-item.warning {
+  color: #ff2d55;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.status-icon {
+  font-size: 18px;
+}
+
+.status-value {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* 我的军团 */
+.my-army {
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.unit-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.unit-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px;
+  border-radius: 8px;
+  min-width: 80px;
+}
+
+.unit-icon {
+  font-size: 24px;
+}
+
+.unit-name {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.unit-hp {
+  font-size: 10px;
+  color: #00ff88;
+  margin-top: 2px;
+}
+
+.empty-tip {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+/* 征战领地 */
+.territories {
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.target-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.target-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px 8px;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.target-card:active {
+  transform: scale(0.95);
+}
+
+.target-card.selected {
+  border-color: #00d4ff;
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+}
+
+.target-card.conquered {
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.1);
+}
+
+.target-difficulty {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.target-difficulty.easy {
+  background: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+}
+
+.target-difficulty.medium {
+  background: rgba(255, 204, 0, 0.2);
+  color: #ffcc00;
+}
+
+.target-difficulty.hard {
+  background: rgba(255, 45, 85, 0.2);
+  color: #ff2d55;
+}
+
+.target-name {
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.target-reward {
+  font-size: 11px;
+  color: #ffcc00;
+}
+
+.conquered-mark {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  color: #00ff88;
+  font-size: 16px;
+}
+
+/* 底部操作栏 */
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  background: rgba(20, 20, 35, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.action-section {
+  margin-bottom: 12px;
+}
+
+.action-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-label {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.recruit-list {
+  white-space: nowrap;
+}
+
+.recruit-item {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-right: 8px;
+  position: relative;
+  min-width: 70px;
+}
+
+.recruit-item:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.recruit-item.locked {
+  opacity: 0.5;
+}
+
+.recruit-icon {
+  font-size: 20px;
+}
+
+.recruit-name {
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.recruit-cost {
+  font-size: 10px;
+  color: #ffcc00;
+  margin-top: 2px;
+}
+
+.lock-mark {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 10px;
+}
+
+.btn-primary {
+  width: 100%;
+  background: linear-gradient(135deg, #00d4ff, #00ffcc);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.btn-primary[disabled] {
+  opacity: 0.5;
+}
+
+.btn-secondary {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background: rgba(0, 0, 0, 0.9);
+  padding: 16px 24px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transition: all 0.3s;
+  z-index: 1000;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.toast-icon {
+  font-size: 32px;
+}
+
+.toast-title {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.toast-message {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}

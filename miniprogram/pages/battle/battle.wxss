@@ -1,0 +1,211 @@
+/* pages/battle/battle.wxss */
+.battle-container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #1a1a2e 0%, #0f3460 100%);
+  padding: 16px;
+  padding-bottom: 80px;
+}
+
+/* 头部 */
+.battle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.battle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.enemy-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ff2d55;
+}
+
+.battle-round {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 区域标题 */
+.side-title {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
+}
+
+/* 敌方区域 */
+.enemy-zone {
+  margin-bottom: 16px;
+}
+
+.enemy-units {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.enemy-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 45, 85, 0.2);
+  border: 1px solid rgba(255, 45, 85, 0.3);
+  padding: 8px;
+  border-radius: 8px;
+  min-width: 70px;
+  position: relative;
+}
+
+.enemy-unit.defeated {
+  opacity: 0.3;
+  filter: grayscale(100%);
+}
+
+.unit-icon {
+  font-size: 24px;
+}
+
+.hp-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  margin: 4px 0;
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff2d55, #ff6b9d);
+  transition: width 0.3s;
+}
+
+.hp-fill.player {
+  background: linear-gradient(90deg, #00d4ff, #00ffcc);
+}
+
+.unit-hp {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 我方区域 */
+.player-zone {
+  margin-bottom: 16px;
+}
+
+.player-units {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.player-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(0, 212, 255, 0.2);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  padding: 8px;
+  border-radius: 8px;
+  min-width: 70px;
+}
+
+.player-unit.defeated {
+  opacity: 0.3;
+  filter: grayscale(100%);
+}
+
+/* 战斗效果 */
+.battle-effect {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.action-text {
+  font-size: 16px;
+  font-weight: bold;
+  animation: fadeInOut 1s ease-in-out;
+}
+
+.action-text.player {
+  color: #00d4ff;
+}
+
+.action-text.enemy {
+  color: #ff2d55;
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0; transform: translateY(10px); }
+  50% { opacity: 1; transform: translateY(0); }
+}
+
+/* 战斗日志 */
+.battle-log {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+  height: 200px;
+}
+
+.log-title {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.log-content {
+  height: 160px;
+}
+
+.log-entry {
+  font-size: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.log-entry.player {
+  color: #00d4ff;
+}
+
+.log-entry.enemy {
+  color: #ff2d55;
+}
+
+.log-entry.result {
+  color: #ffcc00;
+  font-weight: bold;
+}
+
+/* 底部按钮 */
+.battle-actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  background: rgba(20, 20, 35, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-skip {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+}

@@ -1,0 +1,8 @@
+<!--components/toast/toast.wxml-->
+<view class="toast-overlay {{show ? 'show' : ''}}" catchtap="hideToast">
+  <view class="toast-content {{type}}">
+    <text class="toast-icon">{{icon}}</text>
+    <text class="toast-title">{{title}}</text>
+    <text class="toast-message">{{message}}</text>
+  </view>
+</view>

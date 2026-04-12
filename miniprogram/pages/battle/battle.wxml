@@ -1,0 +1,60 @@
+<!--pages/battle/battle.wxml - 战斗界面-->
+<view class="battle-container">
+  <!-- 顶部信息 -->
+  <view class="battle-header">
+    <view class="battle-info">
+      <text class="enemy-name">{{target.name}}</text>
+      <text class="battle-round">第 {{round}} 回合</text>
+    </view>
+  </view>
+
+  <!-- 敌方区域 -->
+  <view class="enemy-zone">
+    <view class="side-title">敌方</view>
+    <view class="enemy-units">
+      <view wx:for="{{enemyUnits}}" wx:key="id" class="enemy-unit {{item.hp <= 0 ? 'defeated' : ''}}">
+        <text class="unit-icon">{{item.icon}}</text>
+        <view class="hp-bar">
+          <view class="hp-fill" style="width: {{item.hp / item.maxHp * 100}}%"></view>
+        </view>
+        <text class="unit-hp">{{item.hp}}/{{item.maxHp}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 战斗效果区域 -->
+  <view class="battle-effect">
+    <view wx:if="{{lastAction}}" class="action-text {{lastAction.isPlayer ? 'player' : 'enemy'}}">
+      {{lastAction.text}}
+    </view>
+  </view>
+
+  <!-- 我方区域 -->
+  <view class="player-zone">
+    <view class="side-title">我方</view>
+    <view class="player-units">
+      <view wx:for="{{playerUnits}}" wx:key="id" class="player-unit {{item.hp <= 0 ? 'defeated' : ''}}">
+        <text class="unit-icon">{{item.icon}}</text>
+        <view class="hp-bar">
+          <view class="hp-fill player" style="width: {{item.hp / item.maxHp * 100}}%"></view>
+        </view>
+        <text class="unit-hp">{{item.hp}}/{{item.maxHp}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 战斗日志 -->
+  <view class="battle-log">
+    <view class="log-title">📜 战斗日志</view>
+    <scroll-view scroll-y class="log-content">
+      <view wx:for="{{battleLog}}" wx:key="id" class="log-entry {{item.type}}">
+        {{item.text}}
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 底部按钮 -->
+  <view class="battle-actions">
+    <button class="btn-skip" bindtap="skipBattle">⏩ 跳过战斗</button>
+  </view>
+</view>
