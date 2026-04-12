@@ -503,6 +503,64 @@
             box-shadow: 0 8px 30px rgba(196, 76, 255, 0.6);
         }
         
+        /* 侦察区域 */
+        .scout-section {
+            text-align: center;
+            margin-top: var(--space-lg);
+        }
+        
+        .btn-scout {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
+            color: white;
+            padding: var(--space-md) var(--space-xl);
+            font-size: 16px;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-scout:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.6);
+        }
+        
+        .btn-scout:disabled {
+            background: #555;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        .scout-result {
+            margin-top: var(--space-md);
+            padding: var(--space-md);
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid var(--neon-cyan);
+            border-radius: var(--radius-md);
+            text-align: left;
+            animation: scoutFadeIn 0.5s ease;
+        }
+        
+        @keyframes scoutFadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .scout-result-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--neon-cyan);
+            margin-bottom: var(--space-xs);
+        }
+        
+        .scout-result-item {
+            font-size: 13px;
+            color: #fff;
+            padding: var(--space-xs) 0;
+        }
+        
         /* 操作栏 */
         .action-bar { 
             display: flex; 
@@ -1302,6 +1360,12 @@
             .challenge-stat-item { font-size: 13px; }
             .challenge-stat-value { font-size: 14px; }
             .challenge-btn { font-size: 16px; padding: var(--space-md); }
+            
+            /* 侦察功能优化 */
+            .btn-scout { font-size: 14px; padding: var(--space-sm) var(--space-lg); }
+            .scout-result { padding: var(--space-sm); }
+            .scout-result-title { font-size: 13px; }
+            .scout-result-item { font-size: 12px; }
         }
         
         @media (max-width: 600px) {
@@ -1387,6 +1451,12 @@
             .challenge-stat-item { font-size: 12px; }
             .challenge-stat-value { font-size: 13px; }
             .challenge-btn { font-size: 14px; padding: var(--space-sm); }
+            
+            /* 侦察功能优化 */
+            .btn-scout { font-size: 13px; padding: var(--space-xs) var(--space-md); }
+            .scout-result { padding: var(--space-xs); }
+            .scout-result-title { font-size: 12px; }
+            .scout-result-item { font-size: 11px; }
         }
         
         @media (max-width: 400px) {
@@ -1464,6 +1534,12 @@
 
             <div class="unlock-section">
                 <button class="btn-unlock" onclick="showUnlockModal()">🔓 解锁新兵种</button>
+            </div>
+
+            <!-- 侦察按钮 -->
+            <div class="scout-section">
+                <button class="btn-scout" onclick="scoutEnemy()">🔍 侦察敌军 (💰100)</button>
+                <div id="scoutResult" class="scout-result" style="display: none;"></div>
             </div>
 
             <!-- 战斗按钮 - 最高优先级 -->
@@ -1778,6 +1854,7 @@
             gameData.activeEvents = [];
             gameData.battleTurn = 0;
             gameData.unitCasualties = [];
+            gameData.hasScouted = false; // 重置侦察状态
             
             // 初始化敌方兵种配置（隐藏）
             const enemyConfig = gameData.enemyConfig[targetId];
@@ -1815,6 +1892,7 @@
             document.getElementById('mapView').style.display = 'none';
             document.getElementById('battleView').style.display = 'block';
             document.getElementById('activeEvents').style.display = 'none';
+            document.getElementById('scoutResult').style.display = 'none'; // 隐藏侦察结果
             updateDifficultyDisplay(); // 更新难度显示
         }
 
@@ -1825,6 +1903,7 @@
             gameData.recruitedUnits = [];
             gameData.activeEvents = [];
             gameData.enemyUnits = []; // 清空敌方兵种
+            gameData.hasScouted = false; // 重置侦察状态
             resetConsecutiveBattles(); // 返回地图重置连战疲劳
         }
 
@@ -2243,6 +2322,72 @@
             list.innerHTML = Object.entries(counts).map(([name, count]) => `<span class="recruited-item">${name} x${count}</span>`).join('');
         }
 
+        // 侦察敌军功能
+        function scoutEnemy() {
+            const scoutCost = 100;
+            
+            // 检查是否已经侦察过
+            if (gameData.hasScouted) {
+                alert('已经侦察过该领地了！');
+                return;
+            }
+            
+            // 检查金币是否足够
+            if (gameData.gold < scoutCost) {
+                alert(`金币不足！需要 ${scoutCost} 金币`);
+                return;
+            }
+            
+            // 扣除金币
+            gameData.gold -= scoutCost;
+            updateGold();
+            
+            // 随机揭示 2-3 个兵种信息
+            const revealCount = Math.min(
+                Math.floor(2 + Math.random() * 2), // 2-3 个
+                gameData.enemyUnits.length
+            );
+            
+            // 随机选择要揭示的兵种
+            const shuffled = [...gameData.enemyUnits].sort(() => Math.random() - 0.5);
+            const revealed = shuffled.slice(0, revealCount);
+            
+            // 显示侦察结果
+            const unitNames = {
+                infantry: '步兵',
+                archer: '弓箭手',
+                cavalry: '骑兵',
+                pikeman: '长矛兵',
+                shieldman: '盾兵',
+                tank: '坦克'
+            };
+            
+            const resultDiv = document.getElementById('scoutResult');
+            resultDiv.innerHTML = `
+                <div class="scout-result-title">🔍 侦察报告</div>
+                ${revealed.map(u => `
+                    <div class="scout-result-item">
+                        ${unitNames[u.id] || u.id} × ${u.count} 
+                        (Lv.${u.level}, 攻击${u.attack}, 生命${u.hp})
+                    </div>
+                `).join('')}
+                <div class="scout-result-item" style="color: #888; font-size: 11px; margin-top: 8px;">
+                    💡 提示：还有 ${gameData.enemyUnits.length - revealCount} 个兵种未探明...
+                </div>
+            `;
+            resultDiv.style.display = 'block';
+            
+            // 标记已侦察
+            gameData.hasScouted = true;
+            
+            // 禁用侦察按钮
+            const scoutBtn = document.querySelector('.btn-scout');
+            if (scoutBtn) {
+                scoutBtn.disabled = true;
+                scoutBtn.textContent = '✅ 已侦察';
+            }
+        }
+        
         function showUnlockModal() {
             document.getElementById('unlockGrid').innerHTML = gameData.units.map(unit => {
                 const canUnlock = !unit.unlocked && gameData.gold >= unit.unlockCost;
