@@ -1636,6 +1636,75 @@
                 shieldman: { strong: ['archer'], weak: ['infantry'], resistVs: ['archer'] },
                 tank: { strong: [], weak: [], immune: true } // 坦克不受克制影响
             },
+            // ========== 敌方兵种配置（隐藏） ==========
+            enemyConfig: {
+                1: { // 边境哨站 (easy)
+                    units: [
+                        { id: 'infantry', count: 3, level: 1 },
+                        { id: 'archer', count: 1, level: 1 }
+                    ]
+                },
+                2: { // 强盗营地 (easy)
+                    units: [
+                        { id: 'infantry', count: 2, level: 1 },
+                        { id: 'archer', count: 2, level: 1 },
+                        { id: 'cavalry', count: 1, level: 1 }
+                    ]
+                },
+                3: { // 废弃城堡 (medium)
+                    units: [
+                        { id: 'infantry', count: 4, level: 2 },
+                        { id: 'pikeman', count: 2, level: 2 },
+                        { id: 'archer', count: 2, level: 2 }
+                    ]
+                },
+                4: { // 兽人部落 (medium)
+                    units: [
+                        { id: 'infantry', count: 3, level: 3 },
+                        { id: 'cavalry', count: 2, level: 3 },
+                        { id: 'shieldman', count: 2, level: 3 },
+                        { id: 'archer', count: 1, level: 3 }
+                    ]
+                },
+                5: { // 黑暗要塞 (hard)
+                    units: [
+                        { id: 'infantry', count: 4, level: 5 },
+                        { id: 'pikeman', count: 3, level: 5 },
+                        { id: 'cavalry', count: 2, level: 5 },
+                        { id: 'archer', count: 2, level: 5 },
+                        { id: 'shieldman', count: 1, level: 5 }
+                    ]
+                },
+                6: { // 龙之巢穴 (hard)
+                    units: [
+                        { id: 'cavalry', count: 4, level: 7 },
+                        { id: 'archer', count: 3, level: 7 },
+                        { id: 'infantry', count: 2, level: 7 },
+                        { id: 'tank', count: 1, level: 7 }
+                    ]
+                },
+                7: { // 恶魔王座 (hard)
+                    units: [
+                        { id: 'infantry', count: 3, level: 9 },
+                        { id: 'pikeman', count: 3, level: 9 },
+                        { id: 'cavalry', count: 3, level: 9 },
+                        { id: 'archer', count: 3, level: 9 },
+                        { id: 'shieldman', count: 2, level: 9 },
+                        { id: 'tank', count: 2, level: 9 }
+                    ]
+                },
+                8: { // 虚空神殿 (hard, 最终 BOSS)
+                    units: [
+                        { id: 'infantry', count: 4, level: 10 },
+                        { id: 'pikeman', count: 4, level: 10 },
+                        { id: 'cavalry', count: 4, level: 10 },
+                        { id: 'archer', count: 4, level: 10 },
+                        { id: 'shieldman', count: 3, level: 10 },
+                        { id: 'tank', count: 3, level: 10 }
+                    ]
+                }
+            },
+            enemyUnits: [], // 当前战斗的敌方兵种（动态设置）
             targets: [
                 { id: 1, name: '边境哨站', icon: 'icons_new/border_outpost.png?v=5', difficulty: 'easy', attack: 50, defense: 30, reward: 200 },
                 { id: 2, name: '强盗营地', icon: 'icons_new/bandit_camp.png?v=5', difficulty: 'easy', attack: 80, defense: 50, reward: 350 },
@@ -1710,6 +1779,28 @@
             gameData.battleTurn = 0;
             gameData.unitCasualties = [];
             
+            // 初始化敌方兵种配置（隐藏）
+            const enemyConfig = gameData.enemyConfig[targetId];
+            if (enemyConfig) {
+                gameData.enemyUnits = enemyConfig.units.map(u => ({
+                    ...u,
+                    ...getUnitStats(u.id) // 获取该兵种的属性
+                }));
+            } else {
+                // 默认配置：根据难度生成
+                const difficulty = gameData.currentTarget.difficulty;
+                const baseCount = difficulty === 'easy' ? 4 : difficulty === 'medium' ? 6 : 10;
+                gameData.enemyUnits = [
+                    { id: 'infantry', count: Math.floor(baseCount * 0.4), level: 1 },
+                    { id: 'archer', count: Math.floor(baseCount * 0.3), level: 1 },
+                    { id: 'cavalry', count: Math.floor(baseCount * 0.2), level: 1 },
+                    { id: 'pikeman', count: Math.floor(baseCount * 0.1), level: 1 }
+                ].filter(u => u.count > 0).map(u => ({
+                    ...u,
+                    ...getUnitStats(u.id)
+                }));
+            }
+            
             // 计算应用难度后的敌人属性
             const difficultyScale = calculateDifficultyScale();
             const scaledEnemyAttack = Math.floor(gameData.currentTarget.attack * difficultyScale);
@@ -1733,6 +1824,7 @@
             gameData.currentTarget = null;
             gameData.recruitedUnits = [];
             gameData.activeEvents = [];
+            gameData.enemyUnits = []; // 清空敌方兵种
             resetConsecutiveBattles(); // 返回地图重置连战疲劳
         }
 
@@ -2001,6 +2093,52 @@
             return { attack: Math.max(1, modifiedAttack), hp: Math.max(1, modifiedHp) };
         }
 
+        // 分析兵种克制关系（用于战斗复盘）
+        function analyzeCounterBonus(playerUnits, enemyUnits) {
+            const advantages = [];
+            const disadvantages = [];
+            
+            const playerTypes = {};
+            const enemyTypes = {};
+            
+            playerUnits.forEach(u => { playerTypes[u.id] = (playerTypes[u.id] || 0) + u.count; });
+            enemyUnits.forEach(u => { enemyTypes[u.id] = (enemyTypes[u.id] || 0) + u.count; });
+            
+            const unitNames = {
+                infantry: '步兵',
+                archer: '弓箭手',
+                cavalry: '骑兵',
+                pikeman: '长矛兵',
+                shieldman: '盾兵',
+                tank: '坦克'
+            };
+            
+            // 检查玩家优势
+            Object.keys(playerTypes).forEach(pType => {
+                Object.keys(enemyTypes).forEach(eType => {
+                    const counter = gameData.unitCounters[pType];
+                    if (counter && counter.strong.includes(eType)) {
+                        advantages.push(`${unitNames[pType]} 克制敌方 ${unitNames[eType]} (+40% 伤害)`);
+                    }
+                    if (counter && counter.bonusVs && counter.bonusVs.includes(eType)) {
+                        advantages.push(`${unitNames[pType]} 对敌方 ${unitNames[eType]} 有专精 (+60% 伤害)`);
+                    }
+                });
+            });
+            
+            // 检查玩家劣势
+            Object.keys(playerTypes).forEach(pType => {
+                Object.keys(enemyTypes).forEach(eType => {
+                    const counter = gameData.unitCounters[pType];
+                    if (counter && counter.weak.includes(eType)) {
+                        disadvantages.push(`${unitNames[pType]} 被敌方 ${unitNames[eType]} 克制 (-25% 伤害)`);
+                    }
+                });
+            });
+            
+            return { advantages, disadvantages };
+        }
+
         // 计算兵种克制后的属性
         function applyUnitCounters(playerUnits, enemyUnits) {
             const playerModifiers = { attack: 0, defense: 0, crit: 0 };
@@ -2012,6 +2150,10 @@
             
             playerUnits.forEach(u => { playerTypes[u.id] = (playerTypes[u.id] || 0) + 1; });
             enemyUnits.forEach(u => { enemyTypes[u.id] = (enemyTypes[u.id] || 0) + 1; });
+            
+            // 输出战斗日志（调试用，正式版可移除）
+            console.log('玩家兵种:', playerTypes);
+            console.log('敌方兵种:', enemyTypes);
             
             // 计算玩家对敌人的克制
             Object.keys(playerTypes).forEach(pType => {
@@ -2173,15 +2315,19 @@
             // 计算难度倍率
             const difficultyScale = calculateDifficultyScale();
             
+            // 使用真实的敌方兵种配置计算克制
+            const { playerModifiers, enemyModifiers } = applyUnitCounters(gameData.recruitedUnits, gameData.enemyUnits);
+            
+            // 计算敌方总战力（用于基础攻防）
+            const totalEnemyAttack = gameData.enemyUnits.reduce((sum, u) => sum + (u.attack * u.count), 0);
+            const totalEnemyDefense = gameData.enemyUnits.reduce((sum, u) => sum + (u.hp * u.count), 0);
+            
             // 随机攻击力：基础攻击 ±20%
             const enemyRandomFactor = 0.8 + Math.random() * 0.4;
-            const baseEnemyAttack = Math.max(1, Math.floor(gameData.currentTarget.attack * enemyRandomFactor * difficultyScale));
+            const baseEnemyAttack = Math.max(1, Math.floor(totalEnemyAttack * enemyRandomFactor * difficultyScale));
             // 随机防御力：基础防御 ±15%
             const enemyDefenseRandomFactor = 0.85 + Math.random() * 0.3;
-            const baseEnemyDefense = Math.max(1, Math.floor(gameData.currentTarget.defense * enemyDefenseRandomFactor * difficultyScale));
-            
-            // 计算兵种克制
-            const { playerModifiers, enemyModifiers } = applyUnitCounters(gameData.recruitedUnits, [{id: 'enemy'}]);
+            const baseEnemyDefense = Math.max(1, Math.floor(totalEnemyDefense * enemyDefenseRandomFactor * difficultyScale));
             
             // 我方基础攻击和防御（应用克制和疲劳）
             let basePlayerAttack = Math.max(1, Math.floor(totalAttack * 0.95));
@@ -2384,6 +2530,19 @@
                     if (entry.classList.contains('critical')) type = 'result';
                     logs.push({ type, text: `${text} ${damage}` });
                 });
+                
+                // 兵种克制分析
+                const counterAnalysis = analyzeCounterBonus(gameData.recruitedUnits, gameData.enemyUnits);
+                if (counterAnalysis.advantages.length > 0 || counterAnalysis.disadvantages.length > 0) {
+                    logs.push({ type: 'result', text: '' });
+                    logs.push({ type: 'result', text: `📊 兵种克制分析：` });
+                    counterAnalysis.advantages.forEach(a => {
+                        logs.push({ type: 'player', text: `✅ ${a}` });
+                    });
+                    counterAnalysis.disadvantages.forEach(d => {
+                        logs.push({ type: 'enemy', text: `⚠️ ${d}` });
+                    });
+                }
                 
                 if (isVictory) {
                     logs.push({ type: 'result', text: `🎉 胜利！获得 💰 ${gameData.currentTarget.reward}` });
