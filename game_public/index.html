@@ -1244,12 +1244,125 @@
             .battle-side.enemy { padding-right: 20px; }
             .battle-side.player { padding-left: 20px; }
             .battle-arena::before { font-size: 32px; }
+            
+            /* 战斗结果弹窗优化 */
+            .battle-result-content { 
+                padding: var(--space-lg); 
+                width: 95%; 
+                max-height: 90vh;
+            }
+            .result-icon { font-size: 48px; }
+            .result-title { font-size: 22px; }
+            .battle-stats { grid-template-columns: 1fr 1fr; gap: var(--space-xs); }
+            .battle-stat-box { padding: var(--space-sm); }
+            .battle-stat-value { font-size: 16px; }
+            
+            /* 战斗过程界面优化 */
+            .battle-process-container { padding: var(--space-md); width: 95%; }
+            .battle-process-title { font-size: 24px; }
+            .battle-arena { margin: var(--space-lg) 0; }
+            .side-icon { width: 60px; height: 60px; }
+            .side-hp-bar { width: 140px; height: 16px; }
+            .battle-actions { height: 150px; }
+            
+            /* 挑战模式弹窗优化 */
+            .challenge-content { padding: var(--space-lg); width: 95%; }
+            .challenge-icon { font-size: 60px; }
+            .challenge-title { font-size: 22px; }
+            .challenge-desc { font-size: 13px; }
+            .challenge-stats { padding: var(--space-sm); }
+            .challenge-stat-item { font-size: 13px; }
+            .challenge-stat-value { font-size: 14px; }
+            .challenge-btn { font-size: 16px; padding: var(--space-md); }
         }
         
         @media (max-width: 600px) {
             .top-bar { flex-direction: column; gap: var(--space-md); }
             .units-grid { grid-template-columns: 1fr; }
             .battle-stats { grid-template-columns: 1fr; }
+            
+            .game-title { font-size: 22px; }
+            .gold-display { font-size: 16px; }
+            
+            /* 地图卡片优化 */
+            .target-card { min-height: 160px; padding: var(--space-md); }
+            .target-name { font-size: 14px; }
+            .target-reward { font-size: 12px; }
+            
+            /* 战斗面板优化 */
+            .battle-panel { padding: var(--space-md); }
+            .panel-title { font-size: 16px; }
+            .enemy-avatar { font-size: 48px; }
+            .enemy-name { font-size: 18px; }
+            .stat-box { padding: var(--space-xs) var(--space-sm); }
+            .stat-value { font-size: 16px; }
+            
+            /* 招募区域优化 */
+            .recruitment-title { font-size: 16px; }
+            .unit-card { padding: var(--space-sm); }
+            
+            /* 战斗结果弹窗优化 */
+            .battle-result-content { padding: var(--space-md); }
+            .result-icon { font-size: 40px; }
+            .result-title { font-size: 20px; }
+            .result-subtitle { font-size: 12px; }
+            .battle-stat-label { font-size: 10px; }
+            .battle-stat-value { font-size: 14px; }
+            .battle-log { max-height: 120px; padding: var(--space-sm); }
+            .log-entry { font-size: 11px; }
+            .btn-result { font-size: 14px; padding: var(--space-sm); }
+            
+            /* 战斗过程界面优化 */
+            .battle-process-title { font-size: 20px; }
+            .battle-process-subtitle { font-size: 14px; }
+            .battle-side.enemy { padding-right: 10px; }
+            .battle-side.player { padding-left: 10px; }
+            .side-icon { width: 50px; height: 50px; margin-bottom: var(--space-sm); }
+            .side-name { font-size: 14px; }
+            .side-hp-bar { width: 100px; height: 12px; }
+            .side-hp-text { font-size: 11px; }
+            .battle-actions { height: 120px; padding: var(--space-sm); }
+            .action-entry { padding: var(--space-xs); }
+            .action-icon { font-size: 18px; }
+            .action-text { font-size: 12px; }
+            .action-damage { font-size: 16px; }
+            .battle-skip-btn { width: 150px; font-size: 12px; padding: var(--space-sm); }
+            
+            /* 解锁弹窗优化 */
+            .modal-content { padding: var(--space-md); width: 95%; }
+            .modal-title { font-size: 20px; }
+            .unlock-grid { gap: var(--space-sm); }
+            .unlock-card { padding: var(--space-sm); }
+            .unlock-icon { font-size: 36px; }
+            .unlock-name { font-size: 14px; }
+            .unlock-cost { font-size: 12px; }
+            .unlock-desc { font-size: 11px; }
+            
+            /* 难度和事件显示优化 */
+            .difficulty-info { padding: var(--space-sm); }
+            .difficulty-info-title { font-size: 14px; }
+            .difficulty-stat { font-size: 12px; padding: var(--space-xs) var(--space-sm); }
+            .active-events { padding: var(--space-sm); }
+            .active-events-title { font-size: 14px; }
+            .active-event-item { font-size: 12px; padding: var(--space-xs) var(--space-sm); }
+            
+            /* 挑战模式弹窗优化 */
+            .challenge-content { padding: var(--space-md); }
+            .challenge-icon { font-size: 50px; }
+            .challenge-title { font-size: 20px; }
+            .challenge-desc { font-size: 12px; }
+            .challenge-stat-item { font-size: 12px; }
+            .challenge-stat-value { font-size: 13px; }
+            .challenge-btn { font-size: 14px; padding: var(--space-sm); }
+        }
+        
+        @media (max-width: 400px) {
+            .map-grid { gap: var(--space-md); }
+            .target-card { min-height: 140px; }
+            .game-title { font-size: 20px; }
+            .battle-process-title { font-size: 18px; }
+            .side-icon { width: 40px; height: 40px; }
+            .side-hp-bar { width: 80px; height: 10px; }
         }
     </style>
 </head>
