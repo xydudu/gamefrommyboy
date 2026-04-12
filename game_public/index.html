@@ -2025,6 +2025,7 @@
                 updatePlayerStats();
                 renderUnits();
                 updateRecruitedList();
+                checkGameOver(); // 检查是否破产
             }
         }
 
@@ -2039,6 +2040,7 @@
                 updatePlayerStats();
                 gameData.recruitedUnits.forEach(u => { if (u.id === unitId) { const s = getUnitStats(unitId); u.attack = s.attack; u.hp = s.hp; u.maxHp = s.hp; } });
                 updateRecruitedList();
+                checkGameOver(); // 检查是否破产
             }
         }
 
@@ -2507,6 +2509,7 @@
                 updateGold();
                 renderUnits();
                 showUnlockModal();
+                checkGameOver(); // 检查是否破产
             }
         }
 
@@ -2821,8 +2824,8 @@
                 // 战斗后检查 Game Over 和通关
                 if (isVictory) {
                     checkVictory();  // 先检查通关
-                    checkGameOver(); // 再检查破产
                 }
+                checkGameOver(); // 无论胜负都检查破产
             }, 1000);
         }
 
