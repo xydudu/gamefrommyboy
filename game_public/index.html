@@ -1899,6 +1899,14 @@
             document.getElementById('battleView').style.display = 'block';
             document.getElementById('activeEvents').style.display = 'none';
             document.getElementById('scoutResult').style.display = 'none'; // 隐藏侦察结果
+            
+            // 重置侦察按钮状态
+            const scoutBtn = document.querySelector('.btn-scout');
+            if (scoutBtn) {
+                scoutBtn.disabled = false;
+                scoutBtn.textContent = '🔍 侦察敌军 (💰100)';
+            }
+            
             updateDifficultyDisplay(); // 更新难度显示
         }
 
